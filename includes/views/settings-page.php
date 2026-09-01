@@ -15,7 +15,7 @@ $session_count = is_array( $cache ) && ! empty( $cache['sessions'] ) ? count( $c
 $sample        = is_array( $cache ) && ! empty( $cache['sessions'][0] ) ? $cache['sessions'][0] : null;
 ?>
 <div class="wrap cryptocon-brella-settings">
-	<h1><?php esc_html_e( 'Brella Schedule', 'cryptocon-brella' ); ?></h1>
+	<h1><?php esc_html_e( 'W3 Brella Integration', 'cryptocon-brella' ); ?></h1>
 
 	<div class="cryptocon-brella-checklist">
 		<h2><?php esc_html_e( 'Credentials', 'cryptocon-brella' ); ?></h2>

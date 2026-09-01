@@ -1,11 +1,11 @@
 # Brella schedule — Bricks builder wiring
 
-CryptoCon Brella exposes a **Brella Schedule** query type and `{brella_*}` dynamic tags for the agenda page.
+W3 Brella Integration exposes a **Brella Schedule** query type and `{brella_*}` dynamic tags for the agenda page.
 
 ## Prerequisites
 
-1. Activate **CryptoCon Brella** plugin.
-2. Enter API key, Organization ID, and Event ID under **Settings → Brella Schedule**.
+1. Activate **W3 Brella Integration** plugin.
+2. Enter API key, Organization ID, and Event ID under **Settings → W3 Brella Integration**.
 3. Click **Test connection**, then **Refresh now** to populate the cache.
 
 ## Agenda query loop
@@ -46,7 +46,7 @@ Use existing ECP conditions to show/hide the agenda block:
 
 ## Filtering behaviour
 
-By default, empty-title **networking** timeslots are excluded. Toggle under **Settings → Brella Schedule → Exclude networking slots**.
+By default, empty-title **networking** timeslots are excluded. Toggle under **Settings → W3 Brella Integration → Exclude networking slots**.
 
 ## Cache
 

@@ -1,9 +1,11 @@
 <?php
 /**
- * Plugin Name: CryptoCon Brella
+ * Plugin Name: W3 Brella Integration
+ * Plugin URI:  https://chunkyduck.com
  * Description: Sync Brella event schedule into WordPress with caching, Bricks query loops, and dynamic tags.
  * Version:     1.0.0
  * Author:      Chunky Duck
+ * Author URI:   https://chunkyduck.com
  * Text Domain: cryptocon-brella
  * Requires PHP: 7.4
  */

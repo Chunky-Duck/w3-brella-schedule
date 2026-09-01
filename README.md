@@ -1,6 +1,6 @@
-# CryptoCon Brella
+# W3 Brella Integration
 
-WordPress plugin that syncs [Brella](https://www.brella.io/) event schedule data via the Integration API, caches it in `wp_options`, and exposes it to [Bricks Builder](https://bricksbuilder.io/) through a custom query loop and dynamic tags.
+WordPress plugin by [Chunky Duck](https://chunkyduck.com) that syncs [Brella](https://www.brella.io/) event schedule data via the Integration API, caches it in `wp_options`, and exposes it to [Bricks Builder](https://bricksbuilder.io/) through a custom query loop and dynamic tags.
 
 ## Requirements
 
@@ -12,8 +12,8 @@ WordPress plugin that syncs [Brella](https://www.brella.io/) event schedule data
 ## Installation
 
 1. Copy `cryptocon-brella` into `wp-content/plugins/`.
-2. Activate **CryptoCon Brella** in the WordPress admin.
-3. Go to **Settings → Brella Schedule** and enter your credentials.
+2. Activate **W3 Brella Integration** in the WordPress admin.
+3. Go to **Settings → W3 Brella Integration** and enter your credentials.
 4. Click **Test connection**, then **Refresh now**.
 
 ## Bricks setup
@@ -26,4 +26,4 @@ See [docs/bricks-brella.md](docs/bricks-brella.md).
 
 ## License
 
-Proprietary — CryptoCon / Chunky Duck.
+Proprietary — [Chunky Duck](https://chunkyduck.com).

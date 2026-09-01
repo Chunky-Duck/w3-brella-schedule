@@ -147,8 +147,8 @@ class Settings {
 
 	public static function register_menu() {
 		add_options_page(
-			__( 'Brella Schedule', 'cryptocon-brella' ),
-			__( 'Brella Schedule', 'cryptocon-brella' ),
+			__( 'W3 Brella Integration', 'cryptocon-brella' ),
+			__( 'W3 Brella Integration', 'cryptocon-brella' ),
 			'manage_options',
 			'cryptocon-brella',
 			array( __CLASS__, 'render_page' )
