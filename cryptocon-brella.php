@@ -3,7 +3,7 @@
  * Plugin Name: W3 Brella Integration
  * Plugin URI:  https://chunkyduck.com
  * Description: Sync Brella event schedule into WordPress with caching, Bricks query loops, and dynamic tags.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Author:      Chunky Duck
  * Author URI:   https://chunkyduck.com
  * Text Domain: cryptocon-brella
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CC_BRELLA_VERSION', '1.0.0' );
+define( 'CC_BRELLA_VERSION', '1.0.1' );
 define( 'CC_BRELLA_FILE', __FILE__ );
 define( 'CC_BRELLA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CC_BRELLA_URL', plugin_dir_url( __FILE__ ) );
@@ -39,7 +39,7 @@ function cc_brella_bootstrap() {
 	CC\Brella\Bricks_Query::init();
 	CC\Brella\Bricks_Tags::init();
 }
-add_action( 'plugins_loaded', 'cc_brella_bootstrap' );
+add_action( 'plugins_loaded', 'cc_brella_bootstrap', 20 );
 
 /**
  * @return CC\Brella\Schedule_Sync

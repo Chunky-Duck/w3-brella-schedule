@@ -1,6 +1,6 @@
 # Brella schedule — Bricks builder wiring
 
-W3 Brella Integration exposes a **Brella Schedule** query type and `{brella_*}` dynamic tags for the agenda page.
+W3 Brella Integration exposes a **W3 Brella Schedule** query type and `{brella_*}` dynamic tags for the agenda page.
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ W3 Brella Integration exposes a **Brella Schedule** query type and `{brella_*}` 
 
 1. Open the Agenda page (or Bricks template) in the builder.
 2. Add a **Query Loop** (or use an existing loop container).
-3. In the query settings, set **Query type** to **Brella Schedule**.
+3. In the query settings, set **Query type** to **W3 Brella Schedule**.
 4. Build the loop item layout with text/heading elements.
 
 ## Dynamic tags (inside the loop)
@@ -57,7 +57,7 @@ By default, empty-title **networking** timeslots are excluded. Toggle under **Se
 ## Example loop structure
 
 ```
-Query Loop (Brella Schedule)
+Query Loop (W3 Brella Schedule)
 ├── Heading     → {brella_session_time_range}
 ├── Heading     → {brella_session_title}
 ├── Text        → {brella_session_subtitle}

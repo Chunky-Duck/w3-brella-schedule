@@ -21,7 +21,7 @@ WordPress plugin by [Chunky Duck](https://chunkyduck.com) that syncs [Brella](ht
 See [docs/bricks-brella.md](docs/bricks-brella.md).
 
 1. Add a Query Loop to your Agenda page.
-2. Set query type to **Brella Schedule**.
+2. Set query type to **W3 Brella Schedule**.
 3. Map elements to `{brella_*}` dynamic tags (e.g. `{brella_session_title}`, `{brella_session_time_range}`).
 
 ## License
