@@ -10,12 +10,39 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Bricks_Query {
 
+	const QUERY_TYPE = 'brellaSchedule';
+
+	/** @var bool */
+	private static $initialized = false;
+
 	public static function init() {
-		add_filter( 'bricks/setup/control_options', array( __CLASS__, 'add_control_options' ) );
+		if ( self::$initialized ) {
+			return;
+		}
+		self::$initialized = true;
+
+		add_filter( 'cc/bricks/query_types', array( __CLASS__, 'register_query_type' ), 10, 1 );
+		// Late direct merge so Brella Schedule survives even if the shared filter path is skipped.
+		add_filter( 'bricks/setup/control_options', array( __CLASS__, 'add_control_options' ), 1000, 1 );
+
 		add_filter( 'bricks/query/run', array( __CLASS__, 'run_query' ), 10, 2 );
 		add_filter( 'bricks/query/loop_object', array( __CLASS__, 'set_loop_object' ), 10, 3 );
 		add_filter( 'bricks/query/loop_object_type', array( __CLASS__, 'set_loop_object_type' ), 10, 3 );
 		add_filter( 'bricks/query/loop_object_id', array( __CLASS__, 'set_loop_object_id' ), 10, 3 );
+	}
+
+	/**
+	 * @param array<string,string> $query_types Query types.
+	 * @return array<string,string>
+	 */
+	public static function register_query_type( $query_types ) {
+		if ( ! is_array( $query_types ) ) {
+			$query_types = array();
+		}
+
+		$query_types[ self::QUERY_TYPE ] = esc_html__( 'W3 Brella Schedule', 'cryptocon-brella' );
+
+		return $query_types;
 	}
 
 	/**
@@ -26,7 +53,9 @@ class Bricks_Query {
 		if ( ! isset( $control_options['queryTypes'] ) || ! is_array( $control_options['queryTypes'] ) ) {
 			$control_options['queryTypes'] = array();
 		}
-		$control_options['queryTypes']['brellaSchedule'] = esc_html__( 'Brella Schedule', 'cryptocon-brella' );
+
+		$control_options['queryTypes'] = self::register_query_type( $control_options['queryTypes'] );
+
 		return $control_options;
 	}
 
