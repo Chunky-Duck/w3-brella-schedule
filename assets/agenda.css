@@ -51,6 +51,22 @@
 	font-size: var(--ba-font-size);
 	line-height: 1.35;
 	position: relative;
+
+	/* Always fill the parent. Bricks containers and blocks are flex boxes, and
+	   without this the agenda sizes to its content, so it changed width
+	   between days with different numbers of theatres. */
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	align-self: stretch;
+	flex-shrink: 1;
+}
+
+.brella-agenda .ba-bar,
+.brella-agenda .ba-day,
+.brella-agenda .ba-scroll {
+	width: 100%;
 	min-width: 0;
 }
 
