@@ -162,13 +162,15 @@ class Agenda_Element extends \Bricks\Element {
 			'description' => esc_html__( 'Grows with the day up to this height, then scrolls inside.', 'cryptocon-brella' ),
 		];
 
-		$this->controls['hscroll'] = [
+		// Features added after the first release are opt-out ("Turn off ...") so agenda
+		// elements already on a page get them without being re-saved. Bricks drops
+		// unticked checkboxes, so an opt-in default would read as off on old elements.
+		$this->controls['no_hscroll'] = [
 			'tab'         => 'content',
 			'group'       => 'grid',
-			'label'       => esc_html__( 'Horizontal scroll', 'cryptocon-brella' ),
+			'label'       => esc_html__( 'Turn off horizontal scroll', 'cryptocon-brella' ),
 			'type'        => 'checkbox',
-			'default'     => true,
-			'description' => esc_html__( 'On: tracks keep their min width and the grid scrolls sideways. Off: tracks shrink to fit the container.', 'cryptocon-brella' ),
+			'description' => esc_html__( 'By default tracks keep their min width and the grid scrolls sideways. Tick to make tracks shrink to fit the container instead.', 'cryptocon-brella' ),
 		];
 
 		$this->controls['breakout'] = [
@@ -240,20 +242,19 @@ class Agenda_Element extends \Bricks\Element {
 
 		/* ----- Filters ----- */
 
-		$this->controls['show_filters'] = [
+		$this->controls['hide_filters'] = [
 			'tab'         => 'content',
 			'group'       => 'filters',
-			'label'       => esc_html__( 'Show filters', 'cryptocon-brella' ),
+			'label'       => esc_html__( 'Hide all filters', 'cryptocon-brella' ),
 			'type'        => 'checkbox',
-			'default'     => true,
-			'description' => esc_html__( 'Dropdowns on the right of the day tabs. A filter hides itself when Brella has nothing to filter by (e.g. no tags).', 'cryptocon-brella' ),
+			'description' => esc_html__( 'Filters show on the right of the day tabs. A filter also hides itself when Brella has nothing to filter by (e.g. no tags).', 'cryptocon-brella' ),
 		];
 
 		$filter_toggles = [
-			'filter_track'   => 'Theatre (track)',
-			'filter_speaker' => 'Speaker',
-			'filter_tag'     => 'Tags',
-			'filter_type'    => 'Session type',
+			'hide_filter_track'   => 'Hide theatre (track) filter',
+			'hide_filter_speaker' => 'Hide speaker filter',
+			'hide_filter_tag'     => 'Hide tags filter',
+			'hide_filter_type'    => 'Hide session type filter',
 		];
 		foreach ( $filter_toggles as $key => $label ) {
 			$this->controls[ $key ] = [
@@ -261,8 +262,7 @@ class Agenda_Element extends \Bricks\Element {
 				'group'    => 'filters',
 				'label'    => $label,
 				'type'     => 'checkbox',
-				'default'  => true,
-				'required' => [ 'show_filters', '=', true ],
+				'required' => [ 'hide_filters', '!=', true ],
 			];
 		}
 
@@ -274,7 +274,7 @@ class Agenda_Element extends \Bricks\Element {
 			'placeholder' => 'Theatre',
 			'inline'      => true,
 			'description' => esc_html__( 'Shown as "All theatres" in the dropdown.', 'cryptocon-brella' ),
-			'required'    => [ 'show_filters', '=', true ],
+			'required'    => [ 'hide_filters', '!=', true ],
 		];
 
 		/* ----- Cards ----- */
@@ -303,13 +303,12 @@ class Agenda_Element extends \Bricks\Element {
 			'default' => true,
 		];
 
-		$this->controls['show_avatars'] = [
+		$this->controls['hide_avatars'] = [
 			'tab'         => 'content',
 			'group'       => 'cards',
-			'label'       => esc_html__( 'Speaker avatars', 'cryptocon-brella' ),
+			'label'       => esc_html__( 'Hide speaker avatars', 'cryptocon-brella' ),
 			'type'        => 'checkbox',
-			'default'     => true,
-			'description' => esc_html__( 'Photo from each speaker\'s Brella profile, or their initials if none is uploaded.', 'cryptocon-brella' ),
+			'description' => esc_html__( 'Avatars use the photo from each speaker\'s Brella profile, or their initials if none is uploaded.', 'cryptocon-brella' ),
 		];
 
 		$this->controls['max_avatars'] = [
@@ -320,7 +319,7 @@ class Agenda_Element extends \Bricks\Element {
 			'min'      => 1,
 			'max'      => 12,
 			'default'  => 3,
-			'required' => [ 'show_avatars', '=', true ],
+			'required' => [ 'hide_avatars', '!=', true ],
 		];
 
 		$this->controls['avatar_size'] = [
@@ -331,7 +330,7 @@ class Agenda_Element extends \Bricks\Element {
 			'units'       => true,
 			'css'         => [ [ 'property' => '--ba-avatar-size' ] ],
 			'placeholder' => '1.35rem',
-			'required'    => [ 'show_avatars', '=', true ],
+			'required'    => [ 'hide_avatars', '!=', true ],
 		];
 
 		$this->controls['show_excerpt'] = [
@@ -525,7 +524,7 @@ class Agenda_Element extends \Bricks\Element {
 				'include_networking' => $bool( 'include_networking' ),
 				'hide_empty_tracks'  => $bool( 'hide_empty_tracks' ),
 				'show_speakers'      => $bool( 'show_speakers' ),
-				'show_avatars'       => $bool( 'show_avatars' ),
+				'show_avatars'       => ! $bool( 'hide_avatars' ),
 				'max_avatars'        => $s['max_avatars'] ?? 3,
 				'show_location'      => $bool( 'show_location' ),
 				'show_subtitle'      => $bool( 'show_subtitle' ),
@@ -536,15 +535,15 @@ class Agenda_Element extends \Bricks\Element {
 				'breakpoint'         => $s['breakpoint'] ?? 768,
 				'theme'              => $s['theme'] ?? 'dark',
 				'heading_tag'        => $s['heading_tag'] ?? 'h3',
-				'show_filters'       => $bool( 'show_filters' ),
+				'show_filters'       => ! $bool( 'hide_filters' ),
 				'filters'            => implode( ',', array_filter( [
-					$bool( 'filter_track' ) ? 'track' : '',
-					$bool( 'filter_speaker' ) ? 'speaker' : '',
-					$bool( 'filter_tag' ) ? 'tag' : '',
-					$bool( 'filter_type' ) ? 'type' : '',
+					$bool( 'hide_filter_track' ) ? '' : 'track',
+					$bool( 'hide_filter_speaker' ) ? '' : 'speaker',
+					$bool( 'hide_filter_tag' ) ? '' : 'tag',
+					$bool( 'hide_filter_type' ) ? '' : 'type',
 				] ) ),
 				'track_label'        => $s['track_label'] ?? '',
-				'hscroll'            => $bool( 'hscroll' ),
+				'hscroll'            => ! $bool( 'no_hscroll' ),
 				'breakout'           => $bool( 'breakout' ),
 				'breakout_min'       => ! empty( $s['breakout_min'] ) ? $s['breakout_min'] : self::tablet_breakpoint(),
 			]

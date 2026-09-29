@@ -18,6 +18,10 @@ A track by time agenda grid built into W3 Brella Integration. It reads the sched
 1. Go to **Settings > W3 Brella Integration**, enter the API key, Organization ID and Event ID, click **Test connection** then **Refresh now**.
 2. In Bricks, add the **Brella Agenda** element (under General) to your page. The element's **Brella data** panel shows the connection status and links straight to the settings page.
 
+## Updating from the standalone plugin
+
+If the separate "Brella Agenda for Bricks" plugin is installed, W3 Brella Integration switches it off the next time an admin loads the dashboard, and its element and shortcode take over straight away. Agenda elements already on pages keep their settings and pick up avatars, filters and horizontal scroll automatically; untick them with the **Hide ...** / **Turn off ...** options.
+
 ## Data and columns
 
 The agenda uses the same cache as the `{brella_*}` tags and the query loop, so cache length and **Refresh now** are managed on the settings page. Logged in editors can also add `?brella_refresh=1` to a page URL to re-sync straight away.
@@ -50,9 +54,9 @@ Everything the element does is also available as a shortcode, handy for a Bricks
 | include_networking | false | Show Brella 1:1 meeting slots |
 | hide_empty_tracks | true | Per day |
 | show_subtitle / show_location / show_speakers | true | |
-| show_avatars | true | Speaker photos from Brella, initials when none |
+| show_avatars | true | Speaker photos from Brella, initials when none (Bricks: *Hide speaker avatars*) |
 | max_avatars | 3 | Extra speakers show as "+N" |
-| show_filters | true | Filter dropdowns beside the day tabs |
+| show_filters | true | Filter dropdowns beside the day tabs (Bricks: *Hide all filters*, plus one *Hide ... filter* per dropdown) |
 | filters | track,speaker,tag,type | Which dropdowns to show, in order. Session type is the session subtitle in Brella (Keynote, Panel Discussion...) |
 | track_label | Theatre | Word used for a track in the filter |
 | show_excerpt | false | Description on the card itself |
@@ -60,7 +64,7 @@ Everything the element does is also available as a shortcode, handy for a Bricks
 | mobile | list | list or scroll |
 | breakpoint | 768 | Element width in px where list mode kicks in |
 | height | auto | Fixed grid height, e.g. `80vh`. The grid scrolls inside it with pinned headers |
-| hscroll | true | Off makes tracks shrink to fit instead of scrolling sideways |
+| hscroll | true | Off makes tracks shrink to fit instead of scrolling sideways (Bricks: *Turn off horizontal scroll*) |
 | breakout | false | Grid runs past its container to the right edge of the window |
 | breakout_min | 991 | Only break out above this window width (Bricks element uses your tablet breakpoint) |
 
