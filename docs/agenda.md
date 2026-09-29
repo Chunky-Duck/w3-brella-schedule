@@ -65,6 +65,8 @@ Everything the element does is also available as a shortcode, handy for a Bricks
 | breakpoint | 768 | Element width in px where list mode kicks in |
 | height | auto | Fixed grid height, e.g. `80vh`. The grid scrolls inside it with pinned headers |
 | hscroll | true | Off makes tracks shrink to fit instead of scrolling sideways (Bricks: *Turn off horizontal scroll*) |
+| freeze | both | Keep fixed while scrolling: both (time column and theatre headers), time, headers or none |
+| freeze_offset | auto | Gap above the pinned headers in px, e.g. for a sticky site header. Blank detects a sticky Bricks header |
 | breakout | false | Grid runs past its container to the right edge of the window |
 | breakout_min | 991 | Only break out above this window width (Bricks element uses your tablet breakpoint) |
 

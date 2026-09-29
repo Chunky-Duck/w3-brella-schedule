@@ -50,6 +50,8 @@ class Agenda_Renderer {
 			'breakout'           => 'false',
 			'breakout_min'       => 991,
 			'height'             => '',
+			'freeze'             => 'both',
+			'freeze_offset'      => '',
 		];
 	}
 
@@ -85,6 +87,9 @@ class Agenda_Renderer {
 			$attrs['data-breakout']     = '1';
 			$attrs['data-breakout-min'] = (string) $o['breakout_min'];
 		}
+		if ( '' !== $o['freeze_offset'] ) {
+			$attrs['data-freeze-offset'] = (string) $o['freeze_offset'];
+		}
 		return $attrs;
 	}
 
@@ -98,6 +103,15 @@ class Agenda_Renderer {
 		}
 		if ( isset( $o['hscroll'] ) && ! $o['hscroll'] ) {
 			$classes[] = 'ba-no-hscroll';
+		}
+		$freeze = $o['freeze'] ?? 'both';
+		if ( ! in_array( $freeze, [ 'both', 'time' ], true ) ) {
+			$classes[] = 'ba-unfreeze-time';
+		}
+		if ( in_array( $freeze, [ 'both', 'headers' ], true ) ) {
+			$classes[] = 'ba-freeze-head';
+		} else {
+			$classes[] = 'ba-unfreeze-head';
 		}
 		return implode( ' ', $classes );
 	}
@@ -119,6 +133,8 @@ class Agenda_Renderer {
 		$o['breakpoint']     = max( 0, (int) $o['breakpoint'] );
 		$o['max_avatars']    = max( 1, min( 12, (int) $o['max_avatars'] ) );
 		$o['breakout_min']   = max( 0, (int) $o['breakout_min'] );
+		$o['freeze']         = in_array( $o['freeze'], [ 'both', 'time', 'headers', 'none' ], true ) ? $o['freeze'] : 'both';
+		$o['freeze_offset']  = is_numeric( $o['freeze_offset'] ) ? (string) max( 0, (int) $o['freeze_offset'] ) : '';
 		$o['height']         = preg_match( '/^\d+(\.\d+)?(px|rem|em|vh|dvh|svh|lvh|%)$/', trim( (string) $o['height'] ) ) ? trim( $o['height'] ) : '';
 		$o['group_by']       = in_array( $o['group_by'], [ 'auto', 'track', 'location', 'tag' ], true ) ? $o['group_by'] : 'auto';
 		$o['details']        = in_array( $o['details'], [ 'modal', 'none' ], true ) ? $o['details'] : 'modal';

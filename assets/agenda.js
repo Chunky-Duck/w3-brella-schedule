@@ -283,6 +283,75 @@
 		if ('ResizeObserver' in window) new ResizeObserver(update).observe(root);
 	}
 
+	/**
+	 * Keep the theatre headers pinned while the page scrolls. When the agenda
+	 * has its own height (the grid scrolls inside), CSS sticky does the job and
+	 * this stays out of the way.
+	 */
+	function initFreezeHead(root) {
+		if (!root.classList.contains('ba-freeze-head')) return;
+
+		var fixedOffset = root.dataset.freezeOffset;
+		var queued = false;
+
+		// Space taken by a sticky or fixed site header (Bricks or otherwise).
+		function topOffset() {
+			if (fixedOffset !== undefined && fixedOffset !== '') return parseInt(fixedOffset, 10) || 0;
+			var header = document.querySelector('#brx-header, header.site-header, body > header');
+			if (!header) return 0;
+			var pos = window.getComputedStyle(header).position;
+			if (pos !== 'fixed' && pos !== 'sticky') return 0;
+			var r = header.getBoundingClientRect();
+			return r.bottom > 0 && r.top <= 0 ? Math.round(r.bottom) : 0;
+		}
+
+		function reset(grid) {
+			grid.classList.remove('is-head-stuck');
+			Array.prototype.forEach.call(grid.querySelectorAll('.ba-track-head, .ba-corner'), function (el) {
+				el.style.transform = '';
+			});
+		}
+
+		function update() {
+			queued = false;
+			Array.prototype.forEach.call(root.querySelectorAll('.ba-grid'), function (grid) {
+				var day = grid.closest('.ba-day');
+				var scroll = grid.closest('.ba-scroll');
+				var inner = scroll && scroll.scrollHeight > scroll.clientHeight + 1;
+
+				if (root.classList.contains('is-list') || !day || !day.classList.contains('is-active') || inner) {
+					reset(grid);
+					return;
+				}
+
+				var heads = grid.querySelectorAll('.ba-track-head, .ba-corner');
+				if (!heads.length) return;
+
+				var rect = grid.getBoundingClientRect();
+				var headH = heads[0].offsetHeight;
+				var y = Math.min(Math.max(topOffset() - rect.top, 0), Math.max(0, rect.height - headH * 2));
+
+				grid.classList.toggle('is-head-stuck', y > 0);
+				Array.prototype.forEach.call(heads, function (el) {
+					el.style.transform = y > 0 ? 'translateY(' + Math.round(y) + 'px)' : '';
+				});
+			});
+		}
+
+		function queue() {
+			if (queued) return;
+			queued = true;
+			window.requestAnimationFrame(update);
+		}
+
+		window.addEventListener('scroll', queue, { passive: true });
+		window.addEventListener('resize', queue);
+		root.addEventListener('click', queue);
+		root.addEventListener('change', queue);
+		root._baFreezeUpdate = queue;
+		queue();
+	}
+
 	function init(root) {
 		if (root.dataset.baReady) return;
 		root.dataset.baReady = '1';
@@ -292,6 +361,7 @@
 		initLive(root);
 		initListMode(root);
 		initBreakout(root);
+		initFreezeHead(root);
 	}
 
 	// Global so Bricks can re-run it after the element renders in the builder.

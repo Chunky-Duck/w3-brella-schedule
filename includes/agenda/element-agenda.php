@@ -173,6 +173,30 @@ class Agenda_Element extends \Bricks\Element {
 			'description' => esc_html__( 'By default tracks keep their min width and the grid scrolls sideways. Tick to make tracks shrink to fit the container instead.', 'cryptocon-brella' ),
 		];
 
+		$this->controls['freeze'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Freeze', 'cryptocon-brella' ),
+			'type'        => 'select',
+			'options'     => [
+				'both'    => esc_html__( 'Time column and theatre headers', 'cryptocon-brella' ),
+				'time'    => esc_html__( 'Time column only', 'cryptocon-brella' ),
+				'headers' => esc_html__( 'Theatre headers only', 'cryptocon-brella' ),
+				'none'    => esc_html__( 'Nothing', 'cryptocon-brella' ),
+			],
+			'placeholder' => esc_html__( 'Time column and theatre headers', 'cryptocon-brella' ),
+			'description' => esc_html__( 'The time column stays put while you scroll sideways; the theatre headers stay at the top while you scroll down, whether the page scrolls or the agenda has its own height.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['freeze_offset'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Frozen headers offset (px)', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'placeholder' => esc_html__( 'auto', 'cryptocon-brella' ),
+			'description' => esc_html__( 'Gap above the pinned headers, e.g. for a sticky site header. Leave blank to detect a sticky Bricks header automatically.', 'cryptocon-brella' ),
+		];
+
 		$this->controls['breakout'] = [
 			'tab'         => 'content',
 			'group'       => 'grid',
@@ -545,6 +569,8 @@ class Agenda_Element extends \Bricks\Element {
 				'track_label'        => $s['track_label'] ?? '',
 				'hscroll'            => ! $bool( 'no_hscroll' ),
 				'breakout'           => $bool( 'breakout' ),
+				'freeze'             => $s['freeze'] ?? 'both',
+				'freeze_offset'      => $s['freeze_offset'] ?? '',
 				'breakout_min'       => ! empty( $s['breakout_min'] ) ? $s['breakout_min'] : self::tablet_breakpoint(),
 			]
 		);

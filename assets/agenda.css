@@ -411,6 +411,49 @@
 	font-weight: 600;
 }
 
+/* ---------- Frozen time column and theatre headers ----------
+   Time column: sticky to the left edge of the scroll box (default).
+   Headers: sticky to the top of the scroll box when the agenda has its own
+   height; otherwise the script keeps them pinned while the page scrolls. */
+
+.brella-agenda.ba-freeze-head .ba-track-head {
+	z-index: 7;
+}
+
+.brella-agenda.ba-freeze-head .ba-corner {
+	z-index: 8;
+}
+
+.brella-agenda.ba-freeze-head .ba-grid.is-head-stuck :is(.ba-track-head, .ba-corner) {
+	box-shadow: inset 0 -3px 0 var(--ba-accent, var(--ba-accent-default)), 0 8px 16px -10px rgb(0 0 0 / 0.45);
+}
+
+.brella-agenda.ba-freeze-head .ba-grid.is-head-stuck .ba-corner {
+	box-shadow: 0 8px 16px -10px rgb(0 0 0 / 0.45);
+}
+
+.brella-agenda.ba-unfreeze-head .ba-track-head {
+	position: relative;
+	top: auto;
+}
+
+.brella-agenda.ba-unfreeze-head .ba-corner {
+	top: auto;
+}
+
+.brella-agenda.ba-unfreeze-time .ba-time {
+	position: relative;
+	left: auto;
+}
+
+.brella-agenda.ba-unfreeze-time .ba-corner {
+	left: auto;
+}
+
+.brella-agenda.ba-unfreeze-time.ba-unfreeze-head .ba-corner {
+	position: relative;
+}
+
 /* No horizontal scroll: columns shrink to fit the container instead */
 .brella-agenda.ba-no-hscroll {
 	--ba-track-min: 0px;
