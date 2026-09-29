@@ -1,0 +1,560 @@
+<?php
+namespace CC\Brella;
+
+/**
+ * Bricks element: Brella Agenda. Reads the schedule cached by W3 Brella Integration.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class Agenda_Element extends \Bricks\Element {
+
+	public $category = 'general';
+	public $name     = 'brella-agenda';
+	public $icon     = 'ti-calendar';
+	public $scripts  = [ 'brellaAgendaInit' ];
+
+	public function get_label() {
+		return esc_html__( 'Brella Agenda', 'cryptocon-brella' );
+	}
+
+	public function get_keywords() {
+		return [ 'brella', 'agenda', 'schedule', 'event', 'timetable', 'program' ];
+	}
+
+	public function enqueue_scripts() {
+		Agenda::enqueue();
+	}
+
+	public function set_control_groups() {
+		$this->control_groups['source']   = [ 'title' => esc_html__( 'Brella data', 'cryptocon-brella' ), 'tab' => 'content' ];
+		$this->control_groups['grid']     = [ 'title' => esc_html__( 'Time grid', 'cryptocon-brella' ), 'tab' => 'content' ];
+		$this->control_groups['filters']  = [ 'title' => esc_html__( 'Filters', 'cryptocon-brella' ), 'tab' => 'content' ];
+		$this->control_groups['cards']    = [ 'title' => esc_html__( 'Session cards', 'cryptocon-brella' ), 'tab' => 'content' ];
+		$this->control_groups['colours']  = [ 'title' => esc_html__( 'Colours', 'cryptocon-brella' ), 'tab' => 'content' ];
+		$this->control_groups['type']     = [ 'title' => esc_html__( 'Typography', 'cryptocon-brella' ), 'tab' => 'content' ];
+	}
+
+	public function set_controls() {
+
+		/* ----- Source ----- */
+
+		$this->controls['connection'] = [
+			'tab'     => 'content',
+			'group'   => 'source',
+			'type'    => 'info',
+			'content' => self::connection_info(),
+		];
+
+		$this->controls['group_by'] = [
+			'tab'         => 'content',
+			'group'       => 'source',
+			'label'       => esc_html__( 'Columns', 'cryptocon-brella' ),
+			'type'        => 'select',
+			'options'     => [
+				'auto'     => esc_html__( 'Auto (track, else location)', 'cryptocon-brella' ),
+				'track'    => esc_html__( 'Brella track', 'cryptocon-brella' ),
+				'location' => esc_html__( 'Location / room', 'cryptocon-brella' ),
+				'tag'      => esc_html__( 'First tag', 'cryptocon-brella' ),
+			],
+			'default'     => 'auto',
+			'description' => esc_html__( 'What each column (theatre) is built from.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['tracks'] = [
+			'tab'         => 'content',
+			'group'       => 'source',
+			'label'       => esc_html__( 'Tracks to show (optional)', 'cryptocon-brella' ),
+			'type'        => 'text',
+			'placeholder' => 'Main Stage|Hall A|Hall B',
+			'description' => esc_html__( 'Pipe separated track names or IDs. Sets column order too. Leave blank for all tracks in Brella order.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['include_networking'] = [
+			'tab'   => 'content',
+			'group' => 'source',
+			'label' => esc_html__( 'Include 1:1 networking slots', 'cryptocon-brella' ),
+			'type'  => 'checkbox',
+		];
+
+		$this->controls['hide_empty_tracks'] = [
+			'tab'     => 'content',
+			'group'   => 'source',
+			'label'   => esc_html__( 'Hide tracks with no sessions that day', 'cryptocon-brella' ),
+			'type'    => 'checkbox',
+			'default' => true,
+		];
+
+		/* ----- Grid ----- */
+
+		$this->controls['step'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Row step (minutes)', 'cryptocon-brella' ),
+			'type'        => 'select',
+			'options'     => [ '5' => '5', '10' => '10', '15' => '15', '30' => '30' ],
+			'default'     => '5',
+			'inline'      => true,
+			'description' => esc_html__( 'Smallest time unit. Match your shortest session.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['label_interval'] = [
+			'tab'     => 'content',
+			'group'   => 'grid',
+			'label'   => esc_html__( 'Time label every (minutes)', 'cryptocon-brella' ),
+			'type'    => 'select',
+			'options' => [ '15' => '15', '30' => '30', '60' => '60' ],
+			'default' => '30',
+			'inline'  => true,
+		];
+
+		$this->controls['slot_height'] = [
+			'tab'     => 'content',
+			'group'   => 'grid',
+			'label'   => esc_html__( 'Height per step', 'cryptocon-brella' ),
+			'type'    => 'number',
+			'units'   => true,
+			'css'     => [ [ 'property' => '--ba-slot-h' ] ],
+			'placeholder' => '1.25rem',
+		];
+
+		$this->controls['track_min'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Track column min width', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-track-min' ] ],
+			'placeholder' => '14rem',
+		];
+
+		$this->controls['time_w'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Time column width', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-time-w' ] ],
+			'placeholder' => '5.5rem',
+		];
+
+		$this->controls['height'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Agenda height', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-h' ] ],
+			'placeholder' => 'auto',
+			'description' => esc_html__( 'Fixed height for the grid (e.g. 80vh or 900px). The grid scrolls inside it and track headers stay pinned. Leave blank to show the full day. Ignored in the phone list view.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['max_h'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Max height', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-max-h' ] ],
+			'placeholder' => 'none',
+			'description' => esc_html__( 'Grows with the day up to this height, then scrolls inside.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['hscroll'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Horizontal scroll', 'cryptocon-brella' ),
+			'type'        => 'checkbox',
+			'default'     => true,
+			'description' => esc_html__( 'On: tracks keep their min width and the grid scrolls sideways. Off: tracks shrink to fit the container.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['breakout'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Break out of container (right)', 'cryptocon-brella' ),
+			'type'        => 'checkbox',
+			'description' => esc_html__( 'The grid runs past its container to the right edge of the window. Only above the tablet breakpoint; the day tabs and filters stay in the container.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['breakout_min'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Break out above (px)', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'placeholder' => (string) self::tablet_breakpoint(),
+			'description' => esc_html__( 'Defaults to your Bricks tablet breakpoint.', 'cryptocon-brella' ),
+			'required'    => [ 'breakout', '=', true ],
+		];
+
+		$this->controls['time_format'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Time format', 'cryptocon-brella' ),
+			'type'        => 'text',
+			'placeholder' => 'g:i a',
+			'inline'      => true,
+		];
+
+		$this->controls['day_format'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Day tab format', 'cryptocon-brella' ),
+			'type'        => 'text',
+			'placeholder' => 'D j M',
+			'inline'      => true,
+		];
+
+		$this->controls['show_timezone'] = [
+			'tab'     => 'content',
+			'group'   => 'grid',
+			'label'   => esc_html__( 'Show timezone in corner', 'cryptocon-brella' ),
+			'type'    => 'checkbox',
+			'default' => true,
+		];
+
+		$this->controls['mobile'] = [
+			'tab'     => 'content',
+			'group'   => 'grid',
+			'label'   => esc_html__( 'Small screens', 'cryptocon-brella' ),
+			'type'    => 'select',
+			'options' => [
+				'list'   => esc_html__( 'Chronological list', 'cryptocon-brella' ),
+				'scroll' => esc_html__( 'Keep grid (swipe sideways)', 'cryptocon-brella' ),
+			],
+			'default' => 'list',
+			'inline'  => true,
+		];
+
+		$this->controls['breakpoint'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'List below width (px)', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'default'     => 768,
+			'required'    => [ 'mobile', '=', 'list' ],
+			'description' => esc_html__( 'Measured on the element, not the viewport.', 'cryptocon-brella' ),
+		];
+
+		/* ----- Filters ----- */
+
+		$this->controls['show_filters'] = [
+			'tab'         => 'content',
+			'group'       => 'filters',
+			'label'       => esc_html__( 'Show filters', 'cryptocon-brella' ),
+			'type'        => 'checkbox',
+			'default'     => true,
+			'description' => esc_html__( 'Dropdowns on the right of the day tabs. A filter hides itself when Brella has nothing to filter by (e.g. no tags).', 'cryptocon-brella' ),
+		];
+
+		$filter_toggles = [
+			'filter_track'   => 'Theatre (track)',
+			'filter_speaker' => 'Speaker',
+			'filter_tag'     => 'Tags',
+			'filter_type'    => 'Session type',
+		];
+		foreach ( $filter_toggles as $key => $label ) {
+			$this->controls[ $key ] = [
+				'tab'      => 'content',
+				'group'    => 'filters',
+				'label'    => $label,
+				'type'     => 'checkbox',
+				'default'  => true,
+				'required' => [ 'show_filters', '=', true ],
+			];
+		}
+
+		$this->controls['track_label'] = [
+			'tab'         => 'content',
+			'group'       => 'filters',
+			'label'       => esc_html__( 'Word for a track', 'cryptocon-brella' ),
+			'type'        => 'text',
+			'placeholder' => 'Theatre',
+			'inline'      => true,
+			'description' => esc_html__( 'Shown as "All theatres" in the dropdown.', 'cryptocon-brella' ),
+			'required'    => [ 'show_filters', '=', true ],
+		];
+
+		/* ----- Cards ----- */
+
+		$this->controls['show_subtitle'] = [
+			'tab'     => 'content',
+			'group'   => 'cards',
+			'label'   => esc_html__( 'Subtitle (session type)', 'cryptocon-brella' ),
+			'type'    => 'checkbox',
+			'default' => true,
+		];
+
+		$this->controls['show_location'] = [
+			'tab'     => 'content',
+			'group'   => 'cards',
+			'label'   => esc_html__( 'Location', 'cryptocon-brella' ),
+			'type'    => 'checkbox',
+			'default' => true,
+		];
+
+		$this->controls['show_speakers'] = [
+			'tab'     => 'content',
+			'group'   => 'cards',
+			'label'   => esc_html__( 'Speakers', 'cryptocon-brella' ),
+			'type'    => 'checkbox',
+			'default' => true,
+		];
+
+		$this->controls['show_avatars'] = [
+			'tab'         => 'content',
+			'group'       => 'cards',
+			'label'       => esc_html__( 'Speaker avatars', 'cryptocon-brella' ),
+			'type'        => 'checkbox',
+			'default'     => true,
+			'description' => esc_html__( 'Photo from each speaker\'s Brella profile, or their initials if none is uploaded.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['max_avatars'] = [
+			'tab'      => 'content',
+			'group'    => 'cards',
+			'label'    => esc_html__( 'Max avatars per card', 'cryptocon-brella' ),
+			'type'     => 'number',
+			'min'      => 1,
+			'max'      => 12,
+			'default'  => 3,
+			'required' => [ 'show_avatars', '=', true ],
+		];
+
+		$this->controls['avatar_size'] = [
+			'tab'         => 'content',
+			'group'       => 'cards',
+			'label'       => esc_html__( 'Avatar size', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-avatar-size' ] ],
+			'placeholder' => '1.35rem',
+			'required'    => [ 'show_avatars', '=', true ],
+		];
+
+		$this->controls['show_excerpt'] = [
+			'tab'   => 'content',
+			'group' => 'cards',
+			'label' => esc_html__( 'Description on card', 'cryptocon-brella' ),
+			'type'  => 'checkbox',
+		];
+
+		$this->controls['details'] = [
+			'tab'     => 'content',
+			'group'   => 'cards',
+			'label'   => esc_html__( 'Click a session', 'cryptocon-brella' ),
+			'type'    => 'select',
+			'options' => [
+				'modal' => esc_html__( 'Open details popup', 'cryptocon-brella' ),
+				'none'  => esc_html__( 'Nothing', 'cryptocon-brella' ),
+			],
+			'default' => 'modal',
+			'inline'  => true,
+		];
+
+		$this->controls['heading_tag'] = [
+			'tab'     => 'content',
+			'group'   => 'cards',
+			'label'   => esc_html__( 'Session title tag', 'cryptocon-brella' ),
+			'type'    => 'select',
+			'options' => [ 'h2' => 'h2', 'h3' => 'h3', 'h4' => 'h4', 'p' => 'p' ],
+			'default' => 'h3',
+			'inline'  => true,
+		];
+
+		$this->controls['radius'] = [
+			'tab'         => 'content',
+			'group'       => 'cards',
+			'label'       => esc_html__( 'Corner radius', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-radius' ] ],
+			'placeholder' => '10px',
+		];
+
+		$this->controls['card_inset'] = [
+			'tab'         => 'content',
+			'group'       => 'cards',
+			'label'       => esc_html__( 'Card spacing', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-card-inset' ] ],
+			'placeholder' => '3px',
+		];
+
+		/* ----- Colours ----- */
+
+		$this->controls['theme'] = [
+			'tab'     => 'content',
+			'group'   => 'colours',
+			'label'   => esc_html__( 'Base theme', 'cryptocon-brella' ),
+			'type'    => 'select',
+			'options' => [ 'dark' => 'Dark', 'light' => 'Light' ],
+			'default' => 'dark',
+			'inline'  => true,
+		];
+
+		$colour_vars = [
+			'--ba-bg'             => 'Background',
+			'--ba-surface'        => 'Card base',
+			'--ba-head-bg'        => 'Track header background',
+			'--ba-text'           => 'Text',
+			'--ba-muted'          => 'Muted text',
+			'--ba-line'           => 'Grid lines',
+			'--ba-line-strong'    => 'Hour lines',
+			'--ba-accent-default' => 'Fallback accent',
+			'--ba-c-magenta'      => 'Brella "magenta" tracks',
+			'--ba-c-green'        => 'Brella "green" tracks',
+			'--ba-c-blue'         => 'Brella "blue" tracks',
+			'--ba-c-cyan'         => 'Brella "cyan" tracks',
+			'--ba-c-yellow'       => 'Brella "yellow" tracks',
+			'--ba-c-orange'       => 'Brella "orange" tracks',
+			'--ba-c-red'          => 'Brella "red" tracks',
+			'--ba-c-purple'       => 'Brella "purple" tracks',
+		];
+
+		foreach ( $colour_vars as $var => $label ) {
+			$this->controls[ 'colour' . str_replace( '-', '_', $var ) ] = [
+				'tab'   => 'content',
+				'group' => 'colours',
+				'label' => $label,
+				'type'  => 'color',
+				'css'   => [ [ 'property' => $var ] ],
+			];
+		}
+
+		$this->controls['card_mix'] = [
+			'tab'         => 'content',
+			'group'       => 'colours',
+			'label'       => esc_html__( 'Card tint strength', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-card-mix' ] ],
+			'placeholder' => '22%',
+		];
+
+		/* ----- Typography ----- */
+
+		$type_targets = [
+			'type_track'    => [ 'Track headers', '.ba-track-head' ],
+			'type_time'     => [ 'Time labels', '.ba-time' ],
+			'type_title'    => [ 'Session title', '.ba-session__title' ],
+			'type_subtitle' => [ 'Session subtitle', '.ba-session__subtitle' ],
+			'type_meta'     => [ 'Session time, location, speakers', '.ba-session__time, .ba-session__location, .ba-session__speakers' ],
+			'type_tabs'     => [ 'Day tabs', '.ba-tab' ],
+			'type_filters'  => [ 'Filter dropdowns', '.ba-filter__select' ],
+		];
+
+		foreach ( $type_targets as $key => $t ) {
+			$this->controls[ $key ] = [
+				'tab'   => 'content',
+				'group' => 'type',
+				'label' => $t[0],
+				'type'  => 'typography',
+				'css'   => [ [ 'property' => 'font', 'selector' => $t[1] ] ],
+			];
+		}
+	}
+
+	/**
+	 * Width of the widest tablet breakpoint in this Bricks install
+	 * (tablet landscape if one is set up, otherwise tablet portrait, default 991px).
+	 */
+	public static function tablet_breakpoint() {
+		$width = 991;
+		if ( class_exists( '\\Bricks\\Breakpoints' ) && method_exists( '\\Bricks\\Breakpoints', 'get_breakpoint_by' ) ) {
+			foreach ( [ 'tablet_landscape', 'tablet_portrait' ] as $key ) {
+				$bp = \Bricks\Breakpoints::get_breakpoint_by( 'key', $key );
+				if ( ! empty( $bp['width'] ) ) {
+					return (int) $bp['width'];
+				}
+			}
+		}
+		return $width;
+	}
+
+	/**
+	 * Settings status and link, shown at the top of the element's Brella panel.
+	 */
+	private static function connection_info() {
+		$url = esc_url( Agenda::settings_url() );
+
+		if ( ! Settings::credentials_complete() ) {
+			return sprintf(
+				/* translators: %s: settings page URL */
+				__( 'No Brella API key yet. <a href="%s" target="_blank" rel="noopener">Configure the key in W3 Brella Integration</a>, then click Refresh now there.', 'cryptocon-brella' ),
+				$url
+			);
+		}
+
+		$count = count( Cache::get_sessions() );
+		$sync  = Cache::last_sync_human();
+
+		return sprintf(
+			/* translators: 1: session count, 2: last sync time, 3: settings URL */
+			__( 'Connected to Brella: %1$d sessions cached, last sync %2$s. <a href="%3$s" target="_blank" rel="noopener">Manage key and cache in W3 Brella Integration</a>.', 'cryptocon-brella' ),
+			$count,
+			esc_html( $sync ? $sync : 'never' ),
+			$url
+		);
+	}
+
+	public function render() {
+		$s = $this->settings;
+
+		if ( ! Settings::credentials_complete() ) {
+			echo $this->render_element_placeholder( [ 'title' => esc_html__( 'Add your Brella API key under Settings > W3 Brella Integration.', 'cryptocon-brella' ) ] ); // phpcs:ignore
+			return;
+		}
+
+		// Bricks omits unchecked checkboxes, so booleans are set explicitly here.
+		$bool = function ( $key ) use ( $s ) {
+			return ! empty( $s[ $key ] );
+		};
+
+		$o = Agenda_Renderer::parse(
+			[
+				'group_by'           => $s['group_by'] ?? 'auto',
+				'step'               => $s['step'] ?? 5,
+				'label_interval'     => $s['label_interval'] ?? 30,
+				'time_format'        => $s['time_format'] ?? '',
+				'day_format'         => $s['day_format'] ?? '',
+				'tracks'             => $s['tracks'] ?? '',
+				'include_networking' => $bool( 'include_networking' ),
+				'hide_empty_tracks'  => $bool( 'hide_empty_tracks' ),
+				'show_speakers'      => $bool( 'show_speakers' ),
+				'show_avatars'       => $bool( 'show_avatars' ),
+				'max_avatars'        => $s['max_avatars'] ?? 3,
+				'show_location'      => $bool( 'show_location' ),
+				'show_subtitle'      => $bool( 'show_subtitle' ),
+				'show_excerpt'       => $bool( 'show_excerpt' ),
+				'show_timezone'      => $bool( 'show_timezone' ),
+				'details'            => $s['details'] ?? 'modal',
+				'mobile'             => $s['mobile'] ?? 'list',
+				'breakpoint'         => $s['breakpoint'] ?? 768,
+				'theme'              => $s['theme'] ?? 'dark',
+				'heading_tag'        => $s['heading_tag'] ?? 'h3',
+				'show_filters'       => $bool( 'show_filters' ),
+				'filters'            => implode( ',', array_filter( [
+					$bool( 'filter_track' ) ? 'track' : '',
+					$bool( 'filter_speaker' ) ? 'speaker' : '',
+					$bool( 'filter_tag' ) ? 'tag' : '',
+					$bool( 'filter_type' ) ? 'type' : '',
+				] ) ),
+				'track_label'        => $s['track_label'] ?? '',
+				'hscroll'            => $bool( 'hscroll' ),
+				'breakout'           => $bool( 'breakout' ),
+				'breakout_min'       => ! empty( $s['breakout_min'] ) ? $s['breakout_min'] : self::tablet_breakpoint(),
+			]
+		);
+
+		$this->set_attribute( '_root', 'class', explode( ' ', Agenda_Renderer::root_classes( $o ) ) );
+		foreach ( Agenda_Renderer::root_attributes( $o ) as $k => $v ) {
+			$this->set_attribute( '_root', $k, $v );
+		}
+
+		echo "<div {$this->render_attributes( '_root' )}>" . Agenda_Renderer::render( $o ) . '</div>'; // phpcs:ignore
+	}
+}

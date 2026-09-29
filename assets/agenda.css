@@ -1,0 +1,966 @@
+/* Brella Agenda for Bricks
+   X axis: tracks. Y axis: start time. Every value below is a custom property,
+   so Bricks style controls (or your own CSS / ACSS variables) can override it. */
+
+.brella-agenda {
+	/* Layout */
+	--ba-time-w: 5.5rem;
+	--ba-track-min: 14rem;
+	--ba-slot-h: 1.25rem;     /* height of one "step" (default 5 minutes) */
+	--ba-gap: 0px;
+	--ba-card-inset: 3px;
+	--ba-radius: 10px;
+	--ba-avatar-size: 1.35rem;
+	--ba-max-h: none;         /* set e.g. 80vh to make track headers stick while scrolling */
+	--ba-h: auto;             /* fixed agenda height; the grid scrolls inside it */
+	--ba-breakout: 0px;       /* set by JS: distance from the container's right edge to the viewport */
+
+	/* Colour (light) */
+	--ba-bg: #ffffff;
+	--ba-surface: #ffffff;
+	--ba-head-bg: #f5f6f8;
+	--ba-text: #14161a;
+	--ba-muted: #5d6470;
+	--ba-line: #e7e9ee;
+	--ba-line-strong: #cfd3db;
+	--ba-card-mix: 12%;
+	--ba-accent-default: #6b5cff;
+
+	/* Brella track colour names */
+	--ba-c-magenta: #d63384;
+	--ba-c-pink: #e85d9a;
+	--ba-c-red: #e5484d;
+	--ba-c-orange: #f76b15;
+	--ba-c-yellow: #d4a106;
+	--ba-c-green: #2f9e5b;
+	--ba-c-teal: #12a594;
+	--ba-c-cyan: #0894b3;
+	--ba-c-blue: #3e63dd;
+	--ba-c-purple: #8e4ec6;
+	--ba-c-violet: #6e56cf;
+	--ba-c-grey: #8b8d98;
+	--ba-c-gray: #8b8d98;
+
+	/* Type */
+	--ba-font-size: 0.875rem;
+	--ba-title-size: 0.95rem;
+	--ba-meta-size: 0.75rem;
+
+	color: var(--ba-text);
+	background: var(--ba-bg);
+	font-size: var(--ba-font-size);
+	line-height: 1.35;
+	position: relative;
+	min-width: 0;
+}
+
+.brella-agenda.ba-theme-dark {
+	color-scheme: dark;
+	--ba-bg: #0d0f14;
+	--ba-surface: #151821;
+	--ba-head-bg: #151821;
+	--ba-text: #eef0f5;
+	--ba-muted: #9aa1b0;
+	--ba-line: #1f2330;
+	--ba-line-strong: #2d3344;
+	--ba-card-mix: 22%;
+	--ba-accent-default: #8b7dff;
+
+	--ba-c-magenta: #f06bb0;
+	--ba-c-pink: #f38bbb;
+	--ba-c-red: #ff6b70;
+	--ba-c-orange: #ff9447;
+	--ba-c-yellow: #f5c542;
+	--ba-c-green: #3fcf7f;
+	--ba-c-teal: #2ed3bd;
+	--ba-c-cyan: #38c6e6;
+	--ba-c-blue: #6f8fff;
+	--ba-c-purple: #b07ff0;
+	--ba-c-violet: #9d8bff;
+}
+
+.brella-agenda *,
+.brella-agenda *::before,
+.brella-agenda *::after {
+	box-sizing: border-box;
+}
+
+.brella-agenda p,
+.brella-agenda h2,
+.brella-agenda h3,
+.brella-agenda h4 {
+	margin: 0;
+}
+
+/* ---------- Day tabs ---------- */
+
+/* ---------- Top bar: day tabs left, filters right ---------- */
+
+.ba-bar {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem 1.5rem;
+	padding-bottom: 1rem;
+}
+
+.ba-tabs {
+	display: flex;
+	gap: 0.5rem;
+	overflow-x: auto;
+	min-width: 0;
+	flex: 0 1 auto;
+	max-width: 50%;
+	padding: 2px;
+	scrollbar-width: thin;
+}
+
+.ba-tab.is-empty {
+	opacity: 0.45;
+}
+
+.ba-filters {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-left: auto;
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+/* Each dropdown shrinks before the row ever wraps */
+.ba-filter {
+	position: relative;
+	min-width: 6.5rem;
+	flex: 0 1 11rem;
+}
+
+.ba-filter::after {
+	content: "";
+	position: absolute;
+	right: 1em;
+	top: 50%;
+	width: 0.4em;
+	height: 0.4em;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: translateY(-70%) rotate(45deg);
+	color: var(--ba-muted);
+	pointer-events: none;
+}
+
+.ba-filter.is-set::after {
+	color: var(--ba-bg);
+}
+
+.ba-filter__select {
+	appearance: none;
+	-webkit-appearance: none;
+	font: inherit;
+	font-weight: 600;
+	color: var(--ba-muted);
+	background: transparent;
+	border: 1px solid var(--ba-line-strong);
+	border-radius: 999px;
+	padding: 0.5em 2.3em 0.5em 1.1em;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ba-filter__select:hover {
+	color: var(--ba-text);
+	border-color: var(--ba-muted);
+}
+
+.ba-filter.is-set .ba-filter__select {
+	color: var(--ba-bg);
+	background: var(--ba-text);
+	border-color: var(--ba-text);
+}
+
+.ba-filter__select:focus-visible,
+.ba-filters__clear:focus-visible {
+	outline: 2px solid var(--ba-accent-default);
+	outline-offset: 2px;
+}
+
+.ba-filter__select option {
+	color: var(--ba-text);
+	background: var(--ba-surface);
+}
+
+.ba-filters__clear {
+	appearance: none;
+	font: inherit;
+	font-weight: 600;
+	color: var(--ba-muted);
+	background: none;
+	border: 0;
+	padding: 0.5em 0.4em;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+
+.ba-filters__clear:hover {
+	color: var(--ba-text);
+}
+
+.ba-filter-status {
+	margin: -0.25rem 0 0.75rem;
+	font-size: var(--ba-meta-size);
+	color: var(--ba-muted);
+}
+
+.ba-filter-status:empty {
+	display: none;
+}
+
+.brella-agenda .ba-empty {
+	padding: 2rem 1rem;
+	text-align: center;
+	border: 1px dashed var(--ba-line-strong);
+	border-radius: var(--ba-radius);
+	color: var(--ba-muted);
+}
+
+.brella-agenda .is-filtered-out {
+	display: none !important;
+}
+
+.ba-visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Narrow: tabs on one row, filters share the full width beneath */
+.brella-agenda.is-list .ba-bar {
+	flex-wrap: wrap;
+}
+
+.brella-agenda.is-list .ba-tabs {
+	max-width: 100%;
+}
+
+.brella-agenda.is-list .ba-filters {
+	width: 100%;
+	margin-left: 0;
+	flex-wrap: wrap;
+	justify-content: stretch;
+}
+
+.brella-agenda.is-list .ba-filter {
+	flex: 1 1 10rem;
+}
+
+
+.ba-tab {
+	appearance: none;
+	flex: 0 0 auto;
+	font: inherit;
+	font-weight: 600;
+	color: var(--ba-muted);
+	background: transparent;
+	border: 1px solid var(--ba-line-strong);
+	border-radius: 999px;
+	padding: 0.5em 1.1em;
+	cursor: pointer;
+	transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ba-tab:hover {
+	color: var(--ba-text);
+	border-color: var(--ba-muted);
+}
+
+.ba-tab[aria-selected="true"] {
+	color: var(--ba-bg);
+	background: var(--ba-text);
+	border-color: var(--ba-text);
+}
+
+.ba-tab:focus-visible {
+	outline: 2px solid var(--ba-accent-default);
+	outline-offset: 2px;
+}
+
+/* ---------- Day panels ----------
+   Only the active day shows. !important so theme or framework rules that set
+   display on the panel (ACSS, Bricks, resets) cannot reveal hidden days. */
+
+.brella-agenda .ba-day:not(.is-active),
+.brella-agenda .ba-day[hidden] {
+	display: none !important;
+}
+
+.brella-agenda .ba-day.is-active {
+	display: block;
+}
+
+/* ---------- Grid ---------- */
+
+.ba-scroll {
+	overflow: auto;
+	height: var(--ba-h);
+	max-height: var(--ba-max-h);
+	overscroll-behavior-x: contain;
+	scrollbar-width: thin;
+	border: 1px solid var(--ba-line);
+	border-radius: var(--ba-radius);
+	background: var(--ba-bg);
+}
+
+.ba-grid {
+	display: grid;
+	column-gap: var(--ba-gap);
+	position: relative;
+	min-width: min-content;
+}
+
+.ba-corner,
+.ba-track-head {
+	grid-row: 1;
+	position: sticky;
+	top: 0;
+	background: var(--ba-head-bg);
+	border-bottom: 1px solid var(--ba-line-strong);
+}
+
+.ba-corner {
+	grid-column: 1;
+	left: 0;
+	z-index: 4;
+	display: flex;
+	align-items: flex-end;
+	padding: 0.75rem 0.75rem 0.6rem;
+	font-size: var(--ba-meta-size);
+	font-weight: 600;
+	color: var(--ba-muted);
+	letter-spacing: 0.04em;
+}
+
+.ba-track-head {
+	z-index: 3;
+	display: flex;
+	align-items: flex-end;
+	padding: 0.9rem 0.75rem 0.7rem;
+	font-weight: 700;
+	font-size: var(--ba-title-size);
+	border-left: 1px solid var(--ba-line);
+	box-shadow: inset 0 -3px 0 var(--ba-accent, var(--ba-accent-default));
+}
+
+.ba-line {
+	grid-column: 1 / -1;
+	border-top: 1px dashed var(--ba-line);
+	pointer-events: none;
+	z-index: 0;
+}
+
+.ba-line.is-hour {
+	border-top-style: solid;
+	border-top-color: var(--ba-line-strong);
+}
+
+.ba-time {
+	grid-column: 1;
+	position: sticky;
+	left: 0;
+	z-index: 2;
+	background: var(--ba-bg);
+	border-right: 1px solid var(--ba-line);
+	padding: 0.2rem 0.75rem 0;
+	font-size: var(--ba-meta-size);
+	font-variant-numeric: tabular-nums;
+	color: var(--ba-muted);
+	white-space: nowrap;
+}
+
+.ba-time.is-hour {
+	color: var(--ba-text);
+	font-weight: 600;
+}
+
+/* No horizontal scroll: columns shrink to fit the container instead */
+.brella-agenda.ba-no-hscroll {
+	--ba-track-min: 0px;
+}
+
+.brella-agenda.ba-no-hscroll .ba-scroll {
+	overflow-x: hidden;
+}
+
+.brella-agenda.ba-no-hscroll .ba-grid {
+	min-width: 0;
+}
+
+/* Break out: the grid runs past the container to the right edge of the
+   window (above the tablet breakpoint only). The bar stays in the container. */
+.brella-agenda.is-breakout .ba-scroll {
+	margin-right: calc(-1 * var(--ba-breakout));
+	border-right: 0;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+/* ---------- Session card ---------- */
+
+.ba-session {
+	--ba-accent: var(--ba-accent-default);
+	position: relative;
+	z-index: 1;
+	min-width: 0;
+	margin: var(--ba-card-inset);
+	overflow: hidden;
+	border-radius: calc(var(--ba-radius) - 2px);
+	border-left: 3px solid var(--ba-accent);
+	--ba-card-bg: color-mix(in srgb, var(--ba-accent) var(--ba-card-mix), var(--ba-surface));
+	background: var(--ba-card-bg);
+	color: var(--ba-text);
+	transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.ba-session__inner {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	padding: 0.45rem 0.6rem;
+}
+
+.ba-session__time {
+	min-width: 0;
+	font-size: var(--ba-meta-size);
+	font-variant-numeric: tabular-nums;
+	color: var(--ba-muted);
+	display: flex;
+	align-items: center;
+	gap: 0.25em;
+	flex-wrap: wrap;
+}
+
+.ba-session__track {
+	display: none;
+	font-size: var(--ba-meta-size);
+	font-weight: 700;
+	color: var(--ba-accent);
+}
+
+.ba-session__subtitle {
+	font-size: var(--ba-meta-size);
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--ba-accent);
+}
+
+.ba-session__title {
+	font-size: var(--ba-title-size);
+	font-weight: 700;
+	line-height: 1.25;
+	overflow-wrap: anywhere;
+}
+
+.ba-session__open {
+	all: unset;
+	cursor: pointer;
+	text-align: left;
+	overflow-wrap: anywhere;
+}
+
+.ba-session__open::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+}
+
+.ba-session:has(.ba-session__open:focus-visible) {
+	outline: 2px solid var(--ba-accent);
+	outline-offset: 2px;
+}
+
+.ba-session__location,
+.ba-session__speakers,
+.ba-session__excerpt {
+	font-size: var(--ba-meta-size);
+	color: var(--ba-muted);
+}
+
+.ba-session__location::before {
+	content: "";
+	display: inline-block;
+	width: 0.45em;
+	height: 0.45em;
+	margin-right: 0.4em;
+	border-radius: 50%;
+	background: var(--ba-accent);
+	vertical-align: 0.1em;
+}
+
+.ba-session__excerpt p + p {
+	margin-top: 0.3em;
+}
+
+/* Speaker avatars (photo from Brella, initials when none) */
+.ba-session__top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.ba-avatars {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	margin-left: auto;
+	/* Overhang the time line slightly so avatars never push the title down */
+	margin-block: -0.3rem;
+}
+
+.ba-avatar {
+	width: var(--ba-avatar-size);
+	height: var(--ba-avatar-size);
+	flex: 0 0 auto;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 2px solid var(--ba-card-bg, var(--ba-surface));
+	background: color-mix(in srgb, var(--ba-accent) 45%, var(--ba-surface));
+	box-sizing: content-box;
+}
+
+.ba-avatar + .ba-avatar {
+	margin-left: calc(var(--ba-avatar-size) * -0.35);
+}
+
+.ba-avatar--initials,
+.ba-avatar--more,
+.ba-speaker__photo--initials {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+	line-height: 1;
+	letter-spacing: 0.02em;
+	color: var(--ba-text);
+	user-select: none;
+}
+
+.ba-avatar--initials,
+.ba-avatar--more {
+	font-size: calc(var(--ba-avatar-size) * 0.38);
+}
+
+.ba-avatar--more {
+	background: var(--ba-head-bg);
+	color: var(--ba-muted);
+}
+
+.ba-session__speaker-names {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+/* Short sessions keep small avatars at the end of their single line */
+.ba-grid .ba-session.is-short .ba-session__top {
+	display: contents;
+}
+
+.ba-grid .ba-session.is-short .ba-avatars {
+	order: 3;
+	align-self: center;
+	--ba-avatar-size: 1.1rem;
+}
+
+.ba-grid .ba-session.is-short .ba-avatar {
+	border-width: 1px;
+}
+
+.ba-grid .ba-session.is-compact .ba-avatars {
+	--ba-avatar-size: 1.2rem;
+}
+
+/* Short sessions: one line until hovered or focused, then expand to fit. */
+.ba-session.is-short .ba-session__inner {
+	flex-direction: row;
+	align-items: baseline;
+	gap: 0.5rem;
+	padding-block: 0.15rem;
+}
+
+.ba-session.is-short .ba-session__time time:last-child,
+.ba-session.is-short .ba-session__subtitle,
+.ba-session.is-short .ba-session__location,
+.ba-session.is-short .ba-session__speakers,
+.ba-session.is-short .ba-session__excerpt {
+	display: none;
+}
+
+.ba-session.is-short .ba-session__time {
+	flex: 0 0 auto;
+}
+
+.ba-session.is-short .ba-session__time {
+	font-size: 0;
+}
+
+.ba-session.is-short .ba-session__time time:first-child {
+	font-size: var(--ba-meta-size);
+}
+
+.ba-session.is-short .ba-session__title,
+.ba-session.is-short .ba-session__open {
+	display: block;
+	min-width: 0;
+	width: 100%;
+	flex: 1 1 auto;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: var(--ba-meta-size);
+}
+
+@media (hover: hover) {
+	.ba-grid .ba-session:hover,
+	.ba-grid .ba-session:focus-within {
+		align-self: start;
+		min-height: calc(100% - 2 * var(--ba-card-inset));
+		overflow: visible;
+		z-index: 6;
+		box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.35);
+		background: color-mix(in srgb, var(--ba-accent) var(--ba-card-mix), var(--ba-surface));
+	}
+
+	.ba-grid .ba-session.is-short:hover .ba-session__inner,
+	.ba-grid .ba-session.is-short:focus-within .ba-session__inner {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0.2rem;
+		padding-block: 0.45rem;
+	}
+
+	.ba-grid .ba-session.is-short:hover .ba-session__time,
+	.ba-grid .ba-session.is-short:focus-within .ba-session__time {
+		font-size: var(--ba-meta-size);
+	}
+
+	.ba-grid .ba-session.is-short:is(:hover, :focus-within) .ba-session__top {
+		display: flex;
+	}
+
+	.ba-grid .ba-session.is-short:is(:hover, :focus-within) .ba-avatars {
+		--ba-avatar-size: 1.35rem;
+	}
+
+	.ba-grid .ba-session.is-short:hover :is(.ba-session__time time:last-child, .ba-session__subtitle, .ba-session__location, .ba-session__speakers, .ba-session__speaker-names, .ba-session__excerpt),
+	.ba-grid .ba-session.is-short:focus-within :is(.ba-session__time time:last-child, .ba-session__subtitle, .ba-session__location, .ba-session__speakers, .ba-session__speaker-names, .ba-session__excerpt) {
+		display: revert;
+	}
+
+	.ba-grid .ba-session.is-short:hover .ba-session__time,
+	.ba-grid .ba-session.is-short:focus-within .ba-session__time {
+		display: flex;
+	}
+
+	.ba-grid .ba-session.is-short:is(:hover, :focus-within) :is(.ba-session__title, .ba-session__open) {
+		white-space: normal;
+		font-size: var(--ba-title-size);
+	}
+}
+
+/* Compact (about 15 to 20 min) and medium (about 25 to 30 min) cards */
+.ba-grid .ba-session.is-compact :is(.ba-session__subtitle, .ba-session__location, .ba-session__speakers, .ba-session__speaker-names, .ba-session__excerpt),
+.ba-grid .ba-session.is-medium :is(.ba-session__location, .ba-session__speaker-names, .ba-session__excerpt) {
+	display: none;
+}
+
+.ba-grid .ba-session:is(.is-compact, .is-medium) :is(.ba-session__title, .ba-session__open) {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+}
+
+.ba-grid .ba-session.is-compact .ba-session__inner {
+	gap: 0.1rem;
+	padding-block: 0.3rem;
+}
+
+@media (hover: hover) {
+	.ba-grid .ba-session:is(.is-compact, .is-medium):is(:hover, :focus-within) :is(.ba-session__subtitle, .ba-session__location, .ba-session__speakers, .ba-session__speaker-names, .ba-session__excerpt) {
+		display: revert;
+	}
+
+	.ba-grid .ba-session:is(.is-compact, .is-medium):is(:hover, :focus-within) :is(.ba-session__title, .ba-session__open) {
+		display: block;
+		-webkit-line-clamp: unset;
+	}
+}
+
+/* Networking (1:1 meeting) slots, when included */
+.ba-session.is-networking {
+	background: transparent;
+	border: 1px dashed var(--ba-line-strong);
+	border-left: 3px solid var(--ba-accent);
+}
+
+/* Live now */
+.ba-session.is-live {
+	box-shadow: 0 0 0 2px var(--ba-accent);
+}
+
+.ba-session.is-live .ba-session__time::after {
+	content: "Live";
+	margin-left: 0.35em;
+	padding: 0.05em 0.5em;
+	border-radius: 999px;
+	font-size: 0.65rem;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ba-bg);
+	background: var(--ba-accent);
+}
+
+/* ---------- Mobile list mode (toggled by JS below the breakpoint) ---------- */
+
+.brella-agenda.is-list .ba-scroll {
+	overflow: visible;
+	height: auto;
+	max-height: none;
+	margin-right: 0;
+	border: 0;
+	background: transparent;
+}
+
+.brella-agenda.is-list .ba-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	min-width: 0;
+}
+
+.brella-agenda.is-list :is(.ba-corner, .ba-track-head, .ba-line, .ba-time) {
+	display: none;
+}
+
+.brella-agenda.is-list .ba-session {
+	margin: 0;
+	overflow: visible;
+}
+
+.brella-agenda.is-list .ba-session__track {
+	display: block;
+}
+
+.brella-agenda.is-list .ba-session.is-short .ba-session__inner {
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.2rem;
+	padding-block: 0.45rem;
+}
+
+.brella-agenda.is-list .ba-session.is-short :is(.ba-session__time time:last-child, .ba-session__subtitle, .ba-session__location, .ba-session__speakers, .ba-session__speaker-names, .ba-session__excerpt) {
+	display: revert;
+}
+
+.brella-agenda.is-list .ba-session.is-short .ba-session__time {
+	display: flex;
+	font-size: var(--ba-meta-size);
+}
+
+.brella-agenda.is-list .ba-session.is-short :is(.ba-session__title, .ba-session__open) {
+	white-space: normal;
+	font-size: var(--ba-title-size);
+}
+
+/* List mode shows every card in full */
+.brella-agenda.is-list .ba-session.is-short .ba-session__top {
+	display: flex;
+}
+
+.brella-agenda.is-list .ba-session .ba-avatars {
+	--ba-avatar-size: 1.6rem;
+}
+
+.brella-agenda.is-list .ba-session:is(.is-compact, .is-medium) :is(.ba-session__subtitle, .ba-session__location, .ba-session__speakers, .ba-session__speaker-names, .ba-session__excerpt) {
+	display: revert;
+}
+
+.brella-agenda.is-list .ba-session:is(.is-compact, .is-medium) :is(.ba-session__title, .ba-session__open) {
+	display: block;
+	-webkit-line-clamp: unset;
+}
+
+/* ---------- Detail dialog ---------- */
+
+.ba-dialog {
+	width: min(40rem, calc(100vw - 2rem));
+	max-height: calc(100dvh - 2rem);
+	padding: 0;
+	border: 1px solid var(--ba-line-strong);
+	border-radius: calc(var(--ba-radius) + 4px);
+	background: var(--ba-surface);
+	color: var(--ba-text);
+	box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.5);
+}
+
+.ba-dialog::backdrop {
+	background: rgb(5 6 10 / 0.6);
+	backdrop-filter: blur(3px);
+}
+
+.ba-dialog__close {
+	position: sticky;
+	top: 0;
+	float: right;
+	margin: 0.75rem 0.75rem 0 0;
+	width: 2.25rem;
+	height: 2.25rem;
+	border: 0;
+	border-radius: 50%;
+	font: inherit;
+	font-size: 1.4rem;
+	line-height: 1;
+	color: var(--ba-text);
+	background: var(--ba-head-bg);
+	cursor: pointer;
+	z-index: 1;
+}
+
+.ba-dialog__body {
+	padding: 1.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+
+.ba-detail__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 1rem;
+	font-size: var(--ba-meta-size);
+	color: var(--ba-muted);
+	padding-right: 2.5rem;
+}
+
+.ba-detail__track {
+	font-weight: 700;
+	color: var(--ba-accent, var(--ba-accent-default));
+}
+
+.ba-detail__subtitle {
+	font-size: var(--ba-meta-size);
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--ba-accent, var(--ba-accent-default));
+}
+
+.brella-agenda .ba-detail__title,
+.ba-dialog .ba-detail__title {
+	font-size: 1.5rem;
+	line-height: 1.2;
+	margin: 0;
+}
+
+.ba-detail__cover {
+	width: 100%;
+	height: auto;
+	border-radius: var(--ba-radius);
+}
+
+.ba-detail__content {
+	color: var(--ba-text);
+}
+
+.ba-detail__content > * + * {
+	margin-top: 0.75em;
+}
+
+.ba-detail__speakers {
+	list-style: none;
+	margin: 0;
+	padding: 0.85rem 0 0;
+	border-top: 1px solid var(--ba-line);
+	display: grid;
+	gap: 0.75rem;
+}
+
+.ba-speaker {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.ba-speaker__photo {
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	object-fit: cover;
+	flex: 0 0 auto;
+}
+
+.ba-speaker__photo--initials {
+	font-size: 1rem;
+	background: color-mix(in srgb, var(--ba-accent, var(--ba-accent-default)) 40%, var(--ba-surface));
+}
+
+.ba-speaker__text {
+	display: flex;
+	flex-direction: column;
+	font-size: var(--ba-font-size);
+}
+
+.ba-speaker__text span {
+	color: var(--ba-muted);
+	font-size: var(--ba-meta-size);
+}
+
+.ba-speaker__text em {
+	font-style: normal;
+	font-size: var(--ba-meta-size);
+	color: var(--ba-accent, var(--ba-accent-default));
+}
+
+.ba-detail__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.ba-tag {
+	font-size: var(--ba-meta-size);
+	padding: 0.2em 0.7em;
+	border-radius: 999px;
+	border: 1px solid var(--ba-line-strong);
+	color: var(--ba-muted);
+}
+
+.ba-notice {
+	padding: 1rem;
+	border: 1px dashed var(--ba-line-strong);
+	border-radius: var(--ba-radius);
+	color: var(--ba-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ba-session,
+	.ba-tab {
+		transition: none;
+	}
+}
