@@ -1,6 +1,6 @@
 # W3 Brella Integration
 
-WordPress plugin by [Chunky Duck](https://chunkyduck.com) that syncs [Brella](https://www.brella.io/) event schedule data via the Integration API, caches it in `wp_options`, and exposes it to [Bricks Builder](https://bricksbuilder.io/) through a custom query loop and dynamic tags.
+WordPress plugin by [Chunky Duck](https://chunkyduck.com) that syncs [Brella](https://www.brella.io/) event schedule data via the Integration API, caches it in `wp_options`, and exposes it to [Bricks Builder](https://bricksbuilder.io/) through a custom query loop, dynamic tags and a ready-made agenda grid element.
 
 ## Requirements
 
@@ -15,6 +15,10 @@ WordPress plugin by [Chunky Duck](https://chunkyduck.com) that syncs [Brella](ht
 2. Activate **W3 Brella Integration** in the WordPress admin.
 3. Go to **Settings → W3 Brella Integration** and enter your credentials.
 4. Click **Test connection**, then **Refresh now**.
+
+## Agenda grid
+
+Add the **Brella Agenda** element in Bricks (or the `[brella_agenda]` shortcode) for a track by time agenda with day tabs, filters and speaker avatars, built from this plugin's cache. See [docs/agenda.md](docs/agenda.md).
 
 ## Bricks setup
 

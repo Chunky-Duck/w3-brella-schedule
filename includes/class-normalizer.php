@@ -63,7 +63,7 @@ class Normalizer {
 		$start    = self::scalar( $attrs['start-time'] ?? '' );
 		$end      = self::scalar( $attrs['end-time'] ?? '' );
 		$duration = (int) self::scalar( $attrs['duration'] ?? 0 );
-		$reservable = self::scalar( $attrs['reservable'] ?? 'false' );
+		$reservable = self::is_true( $attrs['reservable'] ?? false );
 
 		$location = self::scalar( $attrs['location'] ?? '' );
 		if ( '' === $location ) {
@@ -73,6 +73,7 @@ class Normalizer {
 
 		$tracks = self::resolve_tag_names( $rels, 'tags', $index );
 		$speakers = self::resolve_speakers( $rels, $index );
+		$track    = self::resolve_track( $attrs, $rels, $index );
 
 		$local = self::local_times( $start, $end, $timezone );
 
@@ -93,8 +94,16 @@ class Normalizer {
 			'speakers'      => $speakers,
 			'speakers_text' => self::speakers_text( $speakers ),
 			'stream_link'   => self::scalar( $attrs['stream-link'] ?? '' ),
-			'reservable'    => 'true' === strtolower( (string) $reservable ),
+			'reservable'    => $reservable,
 			'content'       => $attrs['content'] ?? array(),
+			// Added in 1.1.0 for the Brella Agenda grid. Existing keys above are unchanged.
+			'track_id'       => $track['id'],
+			'track'          => $track['name'],
+			'track_color'    => $track['color'],
+			'track_position' => $track['position'],
+			'tags_detail'    => self::resolve_tags_detail( $rels, $index ),
+			'color'          => self::scalar( $attrs['color'] ?? '' ),
+			'cover_image'    => self::scalar( $attrs['cover-image-url'] ?? '' ),
 		);
 	}
 
@@ -105,8 +114,20 @@ class Normalizer {
 	private static function is_networking_slot( array $item ) {
 		$attrs = isset( $item['attributes'] ) && is_array( $item['attributes'] ) ? $item['attributes'] : array();
 		$title = trim( self::scalar( $attrs['title'] ?? '' ) );
-		$reservable = strtolower( self::scalar( $attrs['reservable'] ?? 'false' ) );
-		return '' === $title && 'true' === $reservable;
+		return '' === $title && self::is_true( $attrs['reservable'] ?? false );
+	}
+
+	/**
+	 * Brella sends booleans as true/false or as "true"/"false" strings depending on the endpoint.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return bool
+	 */
+	private static function is_true( $value ) {
+		if ( is_bool( $value ) ) {
+			return $value;
+		}
+		return in_array( strtolower( trim( (string) $value ) ), array( 'true', '1', 'yes' ), true );
 	}
 
 	/**
@@ -212,6 +233,67 @@ class Normalizer {
 		);
 
 		return $speakers;
+	}
+
+	/**
+	 * Brella track (the agenda column / theatre) for a timeslot, when the API supplies one.
+	 *
+	 * @param array<string,mixed>               $attrs Attributes.
+	 * @param array<string,mixed>               $rels  Relationships.
+	 * @param array<string,array<string,mixed>> $index Included index.
+	 * @return array{id:string,name:string,color:string,position:int}
+	 */
+	private static function resolve_track( array $attrs, array $rels, array $index ) {
+		$out = array(
+			'id'       => '',
+			'name'     => '',
+			'color'    => '',
+			'position' => 0,
+		);
+
+		$refs = self::relationship_refs( $rels, 'track' );
+		$id   = ! empty( $refs[0]['id'] ) ? (string) $refs[0]['id'] : self::scalar( $attrs['track-id'] ?? '' );
+		if ( '' === $id ) {
+			return $out;
+		}
+
+		$out['id'] = $id;
+		$resource  = $index[ 'track:' . $id ] ?? null;
+		if ( $resource && isset( $resource['attributes'] ) && is_array( $resource['attributes'] ) ) {
+			$a               = $resource['attributes'];
+			$out['name']     = self::scalar( $a['name'] ?? '' );
+			$out['color']    = self::scalar( $a['color'] ?? '' );
+			$out['position'] = (int) self::scalar( $a['position'] ?? 0 );
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Tags with their Brella colours.
+	 *
+	 * @param array<string,mixed>               $rels  Relationships.
+	 * @param array<string,array<string,mixed>> $index Included index.
+	 * @return array<int,array{id:string,name:string,color:string}>
+	 */
+	private static function resolve_tags_detail( array $rels, array $index ) {
+		$tags = array();
+		foreach ( self::relationship_refs( $rels, 'tags' ) as $ref ) {
+			$resource = $index[ 'tag:' . ( $ref['id'] ?? '' ) ] ?? null;
+			if ( ! $resource ) {
+				continue;
+			}
+			$name = self::scalar( $resource['attributes']['name'] ?? '' );
+			if ( '' === $name ) {
+				continue;
+			}
+			$tags[] = array(
+				'id'    => (string) $resource['id'],
+				'name'  => $name,
+				'color' => self::scalar( $resource['attributes']['color'] ?? '' ),
+			);
+		}
+		return $tags;
 	}
 
 	/**

@@ -120,6 +120,11 @@ $sample        = is_array( $cache ) && ! empty( $cache['sessions'][0] ) ? $cache
 		<?php submit_button( __( 'Refresh now', 'cryptocon-brella' ), 'secondary', 'submit', false ); ?>
 	</form>
 
+	<hr />
+
+	<h2><?php esc_html_e( 'Agenda grid', 'cryptocon-brella' ); ?></h2>
+	<p><?php esc_html_e( 'In Bricks, add the Brella Agenda element (under General) to show this schedule as a track by time grid with day tabs, filters and speaker avatars. It reads the cache above, so no other setup is needed. Outside Bricks, use the [brella_agenda] shortcode.', 'cryptocon-brella' ); ?></p>
+
 	<?php if ( $sample ) : ?>
 		<h2><?php esc_html_e( 'Debug: first cached session', 'cryptocon-brella' ); ?></h2>
 		<pre class="cryptocon-brella-debug"><?php echo esc_html( wp_json_encode( $sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) ); ?></pre>

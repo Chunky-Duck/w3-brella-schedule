@@ -66,3 +66,19 @@ Query Loop (W3 Brella Schedule)
 ```
 
 For multi-day agendas, group visually by `{brella_session_day_label}` or add separate loops filtered in a future version.
+
+
+## Agenda grid (Brella Agenda element)
+
+The **Brella Agenda** element (Bricks, under General) renders this cache as a track by time grid with day tabs, filters, speaker avatars and a details popup. No query loop or extra credentials needed. Full options: [agenda.md](agenda.md).
+
+Since 1.1.0 each cached session also carries:
+
+| Key | Contents |
+|-----|----------|
+| `track_id`, `track`, `track_color`, `track_position` | Brella track (the agenda column), when the Integration API returns one |
+| `tags_detail` | Tags with id, name and colour |
+| `color` | Session colour |
+| `cover_image` | Session cover image URL |
+
+Existing keys and `{brella_*}` tags are unchanged. Click **Refresh now** after updating so the cache picks up the new keys.
