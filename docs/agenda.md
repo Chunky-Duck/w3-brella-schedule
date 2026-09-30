@@ -34,6 +34,12 @@ Under **Tracks (theatres)** in the element, **Track width (all tracks)** sets ev
 
 Sponsored tracks show the sponsor's logo from Brella automatically. The sync reads the sponsor linked to each track and, if the logo is not included with the schedule, looks it up from the event's sponsor list. **Hide sponsor logos in track headers** turns them all off; **Sponsor logo height** sizes them.
 
+## Details popup
+
+Under **Details popup** in the element: popup width, padding and background, session title size, speaker photo size (initials scale with it), photo shape (circle, rounded square, square) and the gap between photo and name. **Popup typography** has full font controls for the track/time/location line, session type, session title, description, speaker name, speaker role, speaker job title and company, and tags.
+
+The same values are CSS custom properties on `.brella-agenda` if you prefer to set them in CSS: `--ba-dialog-w`, `--ba-dialog-pad`, `--ba-dialog-bg`, `--ba-dialog-title-size`, `--ba-speaker-photo`, `--ba-speaker-radius`, `--ba-speaker-gap`.
+
 ## Data and columns
 
 The agenda uses the same cache as the `{brella_*}` tags and the query loop, so cache length and **Refresh now** are managed on the settings page. Logged in editors can also add `?brella_refresh=1` to a page URL to re-sync straight away.

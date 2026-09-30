@@ -12,6 +12,15 @@
 	--ba-radius: 10px;
 	--ba-avatar-size: 1.35rem;
 	--ba-sponsor-h: 1.75rem;      /* height of sponsor logos in track headers */
+
+	/* Details popup */
+	--ba-dialog-w: 40rem;
+	--ba-dialog-pad: 1.75rem;
+	--ba-dialog-bg: var(--ba-surface);
+	--ba-dialog-title-size: 1.5rem;
+	--ba-speaker-photo: 48px;
+	--ba-speaker-radius: 50%;
+	--ba-speaker-gap: 0.75rem;
 	--ba-max-h: none;         /* set e.g. 80vh to make track headers stick while scrolling */
 	--ba-h: auto;             /* fixed agenda height; the grid scrolls inside it */
 	--ba-breakout: 0px;       /* set by JS: distance from the container's right edge to the viewport */
@@ -1032,12 +1041,12 @@ a.ba-track-sponsor__logo:focus-visible {
 /* ---------- Detail dialog ---------- */
 
 .ba-dialog {
-	width: min(40rem, calc(100vw - 2rem));
+	width: min(var(--ba-dialog-w), calc(100vw - 2rem));
 	max-height: calc(100dvh - 2rem);
 	padding: 0;
 	border: 1px solid var(--ba-line-strong);
 	border-radius: calc(var(--ba-radius) + 4px);
-	background: var(--ba-surface);
+	background: var(--ba-dialog-bg);
 	color: var(--ba-text);
 	box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.5);
 }
@@ -1066,7 +1075,7 @@ a.ba-track-sponsor__logo:focus-visible {
 }
 
 .ba-dialog__body {
-	padding: 1.75rem;
+	padding: var(--ba-dialog-pad);
 	display: flex;
 	flex-direction: column;
 	gap: 0.85rem;
@@ -1096,7 +1105,7 @@ a.ba-track-sponsor__logo:focus-visible {
 
 .brella-agenda .ba-detail__title,
 .ba-dialog .ba-detail__title {
-	font-size: 1.5rem;
+	font-size: var(--ba-dialog-title-size);
 	line-height: 1.2;
 	margin: 0;
 }
@@ -1127,19 +1136,19 @@ a.ba-track-sponsor__logo:focus-visible {
 .ba-speaker {
 	display: flex;
 	align-items: center;
-	gap: 0.75rem;
+	gap: var(--ba-speaker-gap);
 }
 
 .ba-speaker__photo {
-	width: 48px;
-	height: 48px;
-	border-radius: 50%;
+	width: var(--ba-speaker-photo);
+	height: var(--ba-speaker-photo);
+	border-radius: var(--ba-speaker-radius);
 	object-fit: cover;
 	flex: 0 0 auto;
 }
 
 .ba-speaker__photo--initials {
-	font-size: 1rem;
+	font-size: calc(var(--ba-speaker-photo) * 0.33);
 	background: color-mix(in srgb, var(--ba-accent, var(--ba-accent-default)) 40%, var(--ba-surface));
 }
 

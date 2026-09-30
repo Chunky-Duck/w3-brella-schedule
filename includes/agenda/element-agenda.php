@@ -34,6 +34,7 @@ class Agenda_Element extends \Bricks\Element {
 		$this->control_groups['tracks']   = [ 'title' => esc_html__( 'Tracks (theatres)', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['filters']  = [ 'title' => esc_html__( 'Filters', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['cards']    = [ 'title' => esc_html__( 'Session cards', 'cryptocon-brella' ), 'tab' => 'content' ];
+		$this->control_groups['popup']    = [ 'title' => esc_html__( 'Details popup', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['colours']  = [ 'title' => esc_html__( 'Colours', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['type']     = [ 'title' => esc_html__( 'Typography', 'cryptocon-brella' ), 'tab' => 'content' ];
 	}
@@ -511,6 +512,77 @@ class Agenda_Element extends \Bricks\Element {
 			'css'         => [ [ 'property' => '--ba-card-inset' ] ],
 			'placeholder' => '3px',
 		];
+
+		/* ----- Details popup ----- */
+
+		$popup_sizes = [
+			'popup_width'         => [ 'Popup width', '--ba-dialog-w', '40rem', '' ],
+			'popup_padding'       => [ 'Popup padding', '--ba-dialog-pad', '1.75rem', '' ],
+			'popup_title_size'    => [ 'Session title size', '--ba-dialog-title-size', '1.5rem', 'Or use Session title under Popup typography below for full control.' ],
+			'speaker_photo_size'  => [ 'Speaker photo size', '--ba-speaker-photo', '48px', 'Initials scale with it when a speaker has no photo.' ],
+			'speaker_photo_gap'   => [ 'Gap between photo and name', '--ba-speaker-gap', '0.75rem', '' ],
+		];
+		foreach ( $popup_sizes as $key => $c ) {
+			$this->controls[ $key ] = [
+				'tab'         => 'content',
+				'group'       => 'popup',
+				'label'       => $c[0],
+				'type'        => 'number',
+				'units'       => true,
+				'css'         => [ [ 'property' => $c[1] ] ],
+				'placeholder' => $c[2],
+			] + ( $c[3] ? [ 'description' => $c[3] ] : [] );
+		}
+
+		$this->controls['speaker_photo_shape'] = [
+			'tab'         => 'content',
+			'group'       => 'popup',
+			'label'       => esc_html__( 'Speaker photo shape', 'cryptocon-brella' ),
+			'type'        => 'select',
+			'options'     => [
+				'50%'   => esc_html__( 'Circle', 'cryptocon-brella' ),
+				'0.5rem' => esc_html__( 'Rounded square', 'cryptocon-brella' ),
+				'0'     => esc_html__( 'Square', 'cryptocon-brella' ),
+			],
+			'css'         => [ [ 'property' => '--ba-speaker-radius' ] ],
+			'placeholder' => esc_html__( 'Circle', 'cryptocon-brella' ),
+			'inline'      => true,
+		];
+
+		$this->controls['popup_bg'] = [
+			'tab'   => 'content',
+			'group' => 'popup',
+			'label' => esc_html__( 'Popup background', 'cryptocon-brella' ),
+			'type'  => 'color',
+			'css'   => [ [ 'property' => '--ba-dialog-bg' ] ],
+		];
+
+		$this->controls['popup_type_sep'] = [
+			'tab'   => 'content',
+			'group' => 'popup',
+			'label' => esc_html__( 'Popup typography', 'cryptocon-brella' ),
+			'type'  => 'separator',
+		];
+
+		$popup_type = [
+			'type_popup_meta'     => [ 'Track, time and location', '.ba-detail__meta' ],
+			'type_popup_subtitle' => [ 'Session type', '.ba-detail__subtitle' ],
+			'type_popup_title'    => [ 'Session title', '.ba-dialog .ba-detail__title' ],
+			'type_popup_content'  => [ 'Description', '.ba-detail__content' ],
+			'type_speaker_name'   => [ 'Speaker name', '.ba-speaker__text strong' ],
+			'type_speaker_role'   => [ 'Speaker role (e.g. Moderator)', '.ba-speaker__text em' ],
+			'type_speaker_job'    => [ 'Speaker job title and company', '.ba-speaker__text span' ],
+			'type_popup_tags'     => [ 'Tags', '.ba-tag' ],
+		];
+		foreach ( $popup_type as $key => $t ) {
+			$this->controls[ $key ] = [
+				'tab'   => 'content',
+				'group' => 'popup',
+				'label' => $t[0],
+				'type'  => 'typography',
+				'css'   => [ [ 'property' => 'font', 'selector' => $t[1] ] ],
+			];
+		}
 
 		/* ----- Colours ----- */
 
