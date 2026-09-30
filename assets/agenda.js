@@ -239,24 +239,55 @@
 		root._baLive = setInterval(tick, 60000);
 	}
 
-	function initListMode(root) {
-		if (root.dataset.mobile !== 'list') return;
-		var bp = parseInt(root.dataset.breakpoint, 10) || 0;
-		if (!bp) return;
+	/**
+	 * Calendar or list. The visitor's choice from the switch wins on wider
+	 * screens; below the breakpoint the list is automatic.
+	 */
+	function initView(root) {
+		var bp = root.dataset.mobile === 'list' ? (parseInt(root.dataset.breakpoint, 10) || 0) : 0;
+		var buttons = Array.prototype.slice.call(root.querySelectorAll('.ba-view__btn'));
+		var storeKey = 'brellaAgendaView';
+		var view = root.dataset.defaultView === 'list' ? 'list' : 'calendar';
+		var width = root.getBoundingClientRect().width;
 
-		function apply(width) {
-			root.classList.toggle('is-list', width < bp);
+		if (buttons.length) {
+			try {
+				var saved = window.localStorage.getItem(storeKey);
+				if (saved === 'list' || saved === 'calendar') view = saved;
+			} catch (e) { /* storage unavailable */ }
 		}
 
-		apply(root.getBoundingClientRect().width);
+		function apply() {
+			var narrow = bp > 0 && width < bp;
+			var list = narrow || view === 'list';
+			var changed = root.classList.contains('is-list') !== list || root.classList.contains('is-narrow') !== narrow;
+			root.classList.toggle('is-list', list);
+			root.classList.toggle('is-narrow', narrow);
+			buttons.forEach(function (b) {
+				b.setAttribute('aria-pressed', b.dataset.view === view ? 'true' : 'false');
+			});
+			if (changed) root.dispatchEvent(new CustomEvent('ba:layout'));
+		}
+
+		buttons.forEach(function (b) {
+			b.addEventListener('click', function () {
+				view = b.dataset.view;
+				try { window.localStorage.setItem(storeKey, view); } catch (e) { /* ignore */ }
+				apply();
+			});
+		});
+
+		apply();
 
 		if ('ResizeObserver' in window) {
 			new ResizeObserver(function (entries) {
-				apply(entries[0].contentRect.width);
+				width = entries[0].contentRect.width;
+				apply();
 			}).observe(root);
 		} else {
 			window.addEventListener('resize', function () {
-				apply(root.getBoundingClientRect().width);
+				width = root.getBoundingClientRect().width;
+				apply();
 			});
 		}
 	}
@@ -280,7 +311,78 @@
 
 		update();
 		window.addEventListener('resize', update);
+		root.addEventListener('ba:layout', update);
 		if ('ResizeObserver' in window) new ResizeObserver(update).observe(root);
+	}
+
+	/**
+	 * Keep the theatre headers pinned while the page scrolls. When the agenda
+	 * has its own height (the grid scrolls inside), CSS sticky does the job and
+	 * this stays out of the way.
+	 */
+	function initFreezeHead(root) {
+		if (!root.classList.contains('ba-freeze-head')) return;
+
+		var fixedOffset = root.dataset.freezeOffset;
+		var queued = false;
+
+		// Space taken by a sticky or fixed site header (Bricks or otherwise).
+		function topOffset() {
+			if (fixedOffset !== undefined && fixedOffset !== '') return parseInt(fixedOffset, 10) || 0;
+			var header = document.querySelector('#brx-header, header.site-header, body > header');
+			if (!header) return 0;
+			var pos = window.getComputedStyle(header).position;
+			if (pos !== 'fixed' && pos !== 'sticky') return 0;
+			var r = header.getBoundingClientRect();
+			return r.bottom > 0 && r.top <= 0 ? Math.round(r.bottom) : 0;
+		}
+
+		function reset(grid) {
+			grid.classList.remove('is-head-stuck');
+			Array.prototype.forEach.call(grid.querySelectorAll('.ba-track-head, .ba-corner'), function (el) {
+				el.style.transform = '';
+			});
+		}
+
+		function update() {
+			queued = false;
+			Array.prototype.forEach.call(root.querySelectorAll('.ba-grid'), function (grid) {
+				var day = grid.closest('.ba-day');
+				var scroll = grid.closest('.ba-scroll');
+				var inner = scroll && scroll.scrollHeight > scroll.clientHeight + 1;
+
+				if (root.classList.contains('is-list') || !day || !day.classList.contains('is-active') || inner) {
+					reset(grid);
+					return;
+				}
+
+				var heads = grid.querySelectorAll('.ba-track-head, .ba-corner');
+				if (!heads.length) return;
+
+				var rect = grid.getBoundingClientRect();
+				var headH = heads[0].offsetHeight;
+				var y = Math.min(Math.max(topOffset() - rect.top, 0), Math.max(0, rect.height - headH * 2));
+
+				grid.classList.toggle('is-head-stuck', y > 0);
+				Array.prototype.forEach.call(heads, function (el) {
+					el.style.transform = y > 0 ? 'translateY(' + Math.round(y) + 'px)' : '';
+				});
+			});
+		}
+
+		function queue() {
+			if (queued) return;
+			queued = true;
+			window.requestAnimationFrame(update);
+		}
+
+		window.addEventListener('scroll', queue, { passive: true });
+		window.addEventListener('resize', queue);
+		root.addEventListener('click', queue);
+		root.addEventListener('change', queue);
+		root.addEventListener('ba:layout', queue);
+		root._baFreezeUpdate = queue;
+		queue();
 	}
 
 	function init(root) {
@@ -290,8 +392,9 @@
 		initFilters(root);
 		initDialog(root);
 		initLive(root);
-		initListMode(root);
+		initView(root);
 		initBreakout(root);
+		initFreezeHead(root);
 	}
 
 	// Global so Bricks can re-run it after the element renders in the builder.
