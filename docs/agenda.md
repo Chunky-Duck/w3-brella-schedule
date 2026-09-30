@@ -22,6 +22,16 @@ A track by time agenda grid built into W3 Brella Integration. It reads the sched
 
 If the separate "Brella Agenda for Bricks" plugin is installed, W3 Brella Integration switches it off the next time an admin loads the dashboard, and its element and shortcode take over straight away. Agenda elements already on pages keep their settings and pick up avatars, filters and horizontal scroll automatically; untick them with the **Hide ...** / **Turn off ...** options.
 
+## Tracks: widths and sponsor logos
+
+Under **Tracks (theatres)** in the element, **Per-track settings** takes one row per track you want to change (type the name as it shows in the header):
+
+- **Width**: minimum column width. The column still grows into spare space unless **Fixed width** is ticked.
+- **Hide sponsor logo**: hide this track's sponsor logo only.
+- **Sponsor logo (override)** and **Sponsor link**: replace or add a logo, and where it links to.
+
+Sponsored tracks show the sponsor's logo from Brella automatically. The sync reads the sponsor linked to each track and, if the logo is not included with the schedule, looks it up from the event's sponsor list. **Hide sponsor logos in track headers** turns them all off; **Sponsor logo height** sizes them.
+
 ## Data and columns
 
 The agenda uses the same cache as the `{brella_*}` tags and the query loop, so cache length and **Refresh now** are managed on the settings page. Logged in editors can also add `?brella_refresh=1` to a page URL to re-sync straight away.
@@ -67,6 +77,9 @@ Everything the element does is also available as a shortcode, handy for a Bricks
 | hscroll | true | Off makes tracks shrink to fit instead of scrolling sideways (Bricks: *Turn off horizontal scroll*) |
 | default_view | calendar | calendar or list. Visitors can switch with the Calendar / List buttons (remembered in their browser) |
 | view_toggle | true | Show the Calendar / List switch (Bricks: *Hide Calendar / List switch*) |
+| show_track_sponsors | true | Sponsor logo in the header of sponsored tracks (Bricks: *Hide sponsor logos in track headers*) |
+| sponsor_position | above | Sponsor logo above or beside the track name |
+| track_widths | | Per-track widths, e.g. `Main Stage:20rem\|Hall A:300px!` (`!` = fixed width). In Bricks use *Per-track settings* under Tracks |
 | freeze | both | Keep fixed while scrolling: both (time column and theatre headers), time, headers or none |
 | freeze_offset | auto | Gap above the pinned headers in px, e.g. for a sticky site header. Blank detects a sticky Bricks header |
 | breakout | false | Grid runs past its container to the right edge of the window |

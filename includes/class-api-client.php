@@ -114,6 +114,52 @@ class Api_Client {
 	}
 
 	/**
+	 * All sponsors for the event, keyed by id. Used to add logos to sponsored tracks.
+	 *
+	 * @param array{api_key:string,organization_id:string,event_id:string} $creds Credentials.
+	 * @return array<string,array{id:string,name:string,logo:string,website:string}>|\WP_Error
+	 */
+	public static function fetch_sponsor_map( array $creds ) {
+		$path  = sprintf(
+			'/organizations/%s/events/%s/sponsors',
+			rawurlencode( $creds['organization_id'] ),
+			rawurlencode( $creds['event_id'] )
+		);
+		$map   = array();
+		$page  = 1;
+		$total = 1;
+
+		while ( $page <= $total ) {
+			$response = self::request(
+				$creds,
+				$path,
+				array(
+					'page' => array(
+						'size'   => 500,
+						'number' => $page,
+					),
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				return $response;
+			}
+
+			foreach ( (array) ( $response['data'] ?? array() ) as $item ) {
+				if ( is_array( $item ) && isset( $item['id'] ) ) {
+					$map[ (string) $item['id'] ] = Normalizer::sponsor_fields( (string) $item['id'], $item['attributes'] ?? array() );
+				}
+			}
+
+			$meta  = isset( $response['meta'] ) && is_array( $response['meta'] ) ? $response['meta'] : array();
+			$total = max( 1, (int) ( $meta['total_pages'] ?? 1 ) );
+			++$page;
+		}
+
+		return $map;
+	}
+
+	/**
 	 * @param array{api_key:string,organization_id:string,event_id:string} $creds Credentials.
 	 * @return string|\WP_Error Timezone string or empty.
 	 */

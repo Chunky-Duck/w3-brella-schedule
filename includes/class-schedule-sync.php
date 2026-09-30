@@ -80,6 +80,15 @@ class Schedule_Sync {
 				$timezone
 			);
 
+			// Sponsored tracks: fetch logos if the timeslots only carried sponsor ids.
+			// A failure here (e.g. no sponsor access on the key) never blocks the sync.
+			if ( Normalizer::needs_sponsor_lookup( $sessions ) ) {
+				$sponsor_map = Api_Client::fetch_sponsor_map( $creds );
+				if ( is_array( $sponsor_map ) && $sponsor_map ) {
+					$sessions = Normalizer::fill_sponsors( $sessions, $sponsor_map );
+				}
+			}
+
 			Cache::save(
 				$sessions,
 				array(

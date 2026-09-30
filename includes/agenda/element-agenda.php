@@ -31,6 +31,7 @@ class Agenda_Element extends \Bricks\Element {
 	public function set_control_groups() {
 		$this->control_groups['source']   = [ 'title' => esc_html__( 'Brella data', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['grid']     = [ 'title' => esc_html__( 'Time grid', 'cryptocon-brella' ), 'tab' => 'content' ];
+		$this->control_groups['tracks']   = [ 'title' => esc_html__( 'Tracks (theatres)', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['filters']  = [ 'title' => esc_html__( 'Filters', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['cards']    = [ 'title' => esc_html__( 'Session cards', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['colours']  = [ 'title' => esc_html__( 'Colours', 'cryptocon-brella' ), 'tab' => 'content' ];
@@ -282,6 +283,81 @@ class Agenda_Element extends \Bricks\Element {
 			'default'     => 768,
 			'required'    => [ 'mobile', '=', 'list' ],
 			'description' => esc_html__( 'Measured on the element, not the viewport.', 'cryptocon-brella' ),
+		];
+
+		/* ----- Tracks ----- */
+
+		$this->controls['hide_track_sponsors'] = [
+			'tab'         => 'content',
+			'group'       => 'tracks',
+			'label'       => esc_html__( 'Hide sponsor logos in track headers', 'cryptocon-brella' ),
+			'type'        => 'checkbox',
+			'description' => esc_html__( 'Sponsored tracks show their sponsor\'s logo from Brella in the header. Hide it here for every track, or per track below.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['sponsor_position'] = [
+			'tab'         => 'content',
+			'group'       => 'tracks',
+			'label'       => esc_html__( 'Sponsor logo position', 'cryptocon-brella' ),
+			'type'        => 'select',
+			'options'     => [
+				'above'  => esc_html__( 'Above the track name', 'cryptocon-brella' ),
+				'beside' => esc_html__( 'Beside the track name', 'cryptocon-brella' ),
+			],
+			'placeholder' => esc_html__( 'Above the track name', 'cryptocon-brella' ),
+		];
+
+		$this->controls['sponsor_logo_h'] = [
+			'tab'         => 'content',
+			'group'       => 'tracks',
+			'label'       => esc_html__( 'Sponsor logo height', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-sponsor-h' ] ],
+			'placeholder' => '1.75rem',
+		];
+
+		$this->controls['track_settings'] = [
+			'tab'           => 'content',
+			'group'         => 'tracks',
+			'label'         => esc_html__( 'Per-track settings', 'cryptocon-brella' ),
+			'type'          => 'repeater',
+			'titleProperty' => 'track',
+			'placeholder'   => esc_html__( 'Track', 'cryptocon-brella' ),
+			'description'   => esc_html__( 'Add a row per track (theatre) you want to change. Type the track name exactly as it appears in the agenda header.', 'cryptocon-brella' ),
+			'fields'        => [
+				'track'     => [
+					'label'       => esc_html__( 'Track name', 'cryptocon-brella' ),
+					'type'        => 'text',
+					'placeholder' => 'Main Stage',
+				],
+				'width'     => [
+					'label'       => esc_html__( 'Width', 'cryptocon-brella' ),
+					'type'        => 'number',
+					'units'       => true,
+					'placeholder' => '14rem',
+					'description' => esc_html__( 'Minimum column width. The column still grows to fill spare space unless Fixed width is ticked.', 'cryptocon-brella' ),
+				],
+				'fixed'     => [
+					'label' => esc_html__( 'Fixed width', 'cryptocon-brella' ),
+					'type'  => 'checkbox',
+				],
+				'hide_logo' => [
+					'label' => esc_html__( 'Hide sponsor logo', 'cryptocon-brella' ),
+					'type'  => 'checkbox',
+				],
+				'logo'      => [
+					'label'       => esc_html__( 'Sponsor logo (override)', 'cryptocon-brella' ),
+					'type'        => 'image',
+					'description' => esc_html__( 'Optional. Replaces the logo from Brella, or adds one if Brella has none.', 'cryptocon-brella' ),
+				],
+				'link'      => [
+					'label'       => esc_html__( 'Sponsor link', 'cryptocon-brella' ),
+					'type'        => 'text',
+					'placeholder' => 'https://',
+					'description' => esc_html__( 'Optional. Defaults to the sponsor\'s website in Brella.', 'cryptocon-brella' ),
+				],
+			],
 		];
 
 		/* ----- Filters ----- */
@@ -544,6 +620,39 @@ class Agenda_Element extends \Bricks\Element {
 		);
 	}
 
+	/**
+	 * Repeater rows into plain values (image control to URL).
+	 *
+	 * @param mixed $rows Repeater value.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function track_settings_from( $rows ) {
+		$out = [];
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$logo = '';
+			if ( ! empty( $row['logo'] ) && is_array( $row['logo'] ) ) {
+				if ( ! empty( $row['logo']['id'] ) && function_exists( 'wp_get_attachment_image_url' ) ) {
+					$logo = (string) wp_get_attachment_image_url( (int) $row['logo']['id'], 'medium' );
+				}
+				if ( '' === $logo && ! empty( $row['logo']['url'] ) ) {
+					$logo = (string) $row['logo']['url'];
+				}
+			}
+			$out[] = [
+				'track'     => (string) ( $row['track'] ?? '' ),
+				'width'     => (string) ( $row['width'] ?? '' ),
+				'fixed'     => ! empty( $row['fixed'] ),
+				'logo'      => $logo,
+				'link'      => (string) ( $row['link'] ?? '' ),
+				'hide_logo' => ! empty( $row['hide_logo'] ),
+			];
+		}
+		return $out;
+	}
+
 	public function render() {
 		$s = $this->settings;
 
@@ -592,6 +701,9 @@ class Agenda_Element extends \Bricks\Element {
 				'freeze'             => $s['freeze'] ?? 'both',
 				'default_view'       => $s['default_view'] ?? 'calendar',
 				'view_toggle'        => ! $bool( 'hide_view_toggle' ),
+				'show_track_sponsors' => ! $bool( 'hide_track_sponsors' ),
+				'sponsor_position'   => $s['sponsor_position'] ?? 'above',
+				'track_settings'     => self::track_settings_from( $s['track_settings'] ?? [] ),
 				'freeze_offset'      => $s['freeze_offset'] ?? '',
 				'breakout_min'       => ! empty( $s['breakout_min'] ) ? $s['breakout_min'] : self::tablet_breakpoint(),
 			]
