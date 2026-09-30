@@ -11,6 +11,7 @@
 	--ba-card-inset: 3px;
 	--ba-radius: 10px;
 	--ba-avatar-size: 1.35rem;
+	--ba-sponsor-h: 1.75rem;      /* height of sponsor logos in track headers */
 	--ba-max-h: none;         /* set e.g. 80vh to make track headers stick while scrolling */
 	--ba-h: auto;             /* fixed agenda height; the grid scrolls inside it */
 	--ba-breakout: 0px;       /* set by JS: distance from the container's right edge to the viewport */
@@ -439,6 +440,65 @@
 	font-size: var(--ba-title-size);
 	border-left: 1px solid var(--ba-line);
 	box-shadow: inset 0 -3px 0 var(--ba-accent, var(--ba-accent-default));
+}
+
+/* Sponsor logo in a track header */
+.ba-track-head.has-sponsor {
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: flex-end;
+	gap: 0.45rem;
+}
+
+.ba-track-head.has-sponsor .ba-track-sponsor {
+	order: -1;
+	align-self: flex-start;
+}
+
+/* "Beside the name" option */
+.brella-agenda.ba-sponsor-beside .ba-track-head.has-sponsor {
+	flex-direction: row;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.brella-agenda.ba-sponsor-beside .ba-track-head.has-sponsor .ba-track-sponsor {
+	order: 0;
+	align-self: center;
+	flex: 0 1 auto;
+	max-width: 45%;
+}
+
+.ba-track-head__name {
+	min-width: 0;
+}
+
+.ba-track-sponsor {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex: 0 0 auto;
+	max-width: 100%;
+	align-self: center;
+}
+
+.ba-track-sponsor__logo {
+	display: inline-flex;
+	min-width: 0;
+}
+
+.ba-track-sponsor img {
+	display: block;
+	height: var(--ba-sponsor-h);
+	width: auto;
+	max-width: 100%;
+	object-fit: contain;
+}
+
+a.ba-track-sponsor__logo:focus-visible {
+	outline: 2px solid var(--ba-accent, var(--ba-accent-default));
+	outline-offset: 2px;
 }
 
 .ba-line {

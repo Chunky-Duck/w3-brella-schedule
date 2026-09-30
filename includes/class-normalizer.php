@@ -101,6 +101,7 @@ class Normalizer {
 			'track'          => $track['name'],
 			'track_color'    => $track['color'],
 			'track_position' => $track['position'],
+			'track_sponsors' => $track['sponsors'],
 			'tags_detail'    => self::resolve_tags_detail( $rels, $index ),
 			'color'          => self::scalar( $attrs['color'] ?? '' ),
 			'cover_image'    => self::scalar( $attrs['cover-image-url'] ?? '' ),
@@ -249,6 +250,7 @@ class Normalizer {
 			'name'     => '',
 			'color'    => '',
 			'position' => 0,
+			'sponsors' => array(),
 		);
 
 		$refs = self::relationship_refs( $rels, 'track' );
@@ -264,9 +266,83 @@ class Normalizer {
 			$out['name']     = self::scalar( $a['name'] ?? '' );
 			$out['color']    = self::scalar( $a['color'] ?? '' );
 			$out['position'] = (int) self::scalar( $a['position'] ?? 0 );
+
+			// Sponsors attached to the track in Brella.
+			foreach ( self::relationship_refs( $resource['relationships'] ?? array(), 'sponsors' ) as $ref ) {
+				$sid = (string) ( $ref['id'] ?? '' );
+				if ( '' === $sid ) {
+					continue;
+				}
+				$sponsor = $index[ 'sponsor:' . $sid ] ?? ( $index[ 'public-sponsor:' . $sid ] ?? null );
+				$out['sponsors'][] = self::sponsor_fields( $sid, $sponsor['attributes'] ?? array() );
+			}
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Name, logo and website from a Brella sponsor's attributes.
+	 *
+	 * @param string              $id    Sponsor id.
+	 * @param array<string,mixed> $attrs Sponsor attributes.
+	 * @return array{id:string,name:string,logo:string,website:string}
+	 */
+	public static function sponsor_fields( $id, $attrs ) {
+		$attrs = is_array( $attrs ) ? $attrs : array();
+		return array(
+			'id'      => (string) $id,
+			'name'    => self::scalar( $attrs['name'] ?? '' ),
+			'logo'    => self::scalar( $attrs['logo-url'] ?? ( $attrs['logo_url'] ?? ( $attrs['logo'] ?? '' ) ) ),
+			'website' => self::scalar( $attrs['website'] ?? '' ),
+		);
+	}
+
+	/**
+	 * Fill in track sponsor names and logos from a separate sponsors list,
+	 * for when the timeslot payload only carries sponsor ids.
+	 *
+	 * @param array<int,array<string,mixed>>  $sessions Normalised sessions.
+	 * @param array<string,array<string,string>> $map   Sponsor id => fields.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function fill_sponsors( array $sessions, array $map ) {
+		foreach ( $sessions as &$session ) {
+			if ( empty( $session['track_sponsors'] ) ) {
+				continue;
+			}
+			foreach ( $session['track_sponsors'] as &$sponsor ) {
+				$known = $map[ $sponsor['id'] ] ?? null;
+				if ( ! $known ) {
+					continue;
+				}
+				foreach ( array( 'name', 'logo', 'website' ) as $k ) {
+					if ( '' === $sponsor[ $k ] && '' !== $known[ $k ] ) {
+						$sponsor[ $k ] = $known[ $k ];
+					}
+				}
+			}
+			unset( $sponsor );
+		}
+		unset( $session );
+		return $sessions;
+	}
+
+	/**
+	 * True when any session has a track sponsor without a logo yet.
+	 *
+	 * @param array<int,array<string,mixed>> $sessions Normalised sessions.
+	 * @return bool
+	 */
+	public static function needs_sponsor_lookup( array $sessions ) {
+		foreach ( $sessions as $session ) {
+			foreach ( (array) ( $session['track_sponsors'] ?? array() ) as $sponsor ) {
+				if ( '' === ( $sponsor['logo'] ?? '' ) ) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

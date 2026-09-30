@@ -52,6 +52,10 @@ class Agenda_Renderer {
 			'height'             => '',
 			'freeze'             => 'both',
 			'view_toggle'        => 'true',
+			'show_track_sponsors' => 'true',
+			'track_widths'       => '',
+			'track_settings'     => [],
+			'sponsor_position'   => 'above',
 			'default_view'       => 'calendar',
 			'freeze_offset'      => '',
 		];
@@ -107,6 +111,9 @@ class Agenda_Renderer {
 		if ( isset( $o['hscroll'] ) && ! $o['hscroll'] ) {
 			$classes[] = 'ba-no-hscroll';
 		}
+		if ( 'beside' === ( $o['sponsor_position'] ?? 'above' ) ) {
+			$classes[] = 'ba-sponsor-beside';
+		}
 		$freeze = $o['freeze'] ?? 'both';
 		if ( ! in_array( $freeze, [ 'both', 'time' ], true ) ) {
 			$classes[] = 'ba-unfreeze-time';
@@ -127,7 +134,7 @@ class Agenda_Renderer {
 			return null !== $v && '' !== $v;
 		} ) );
 
-		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout', 'view_toggle' ] as $k ) {
+		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout', 'view_toggle', 'show_track_sponsors' ] as $k ) {
 			$o[ $k ] = is_bool( $o[ $k ] ) ? $o[ $k ] : filter_var( $o[ $k ], FILTER_VALIDATE_BOOLEAN );
 		}
 
@@ -137,6 +144,7 @@ class Agenda_Renderer {
 		$o['max_avatars']    = max( 1, min( 12, (int) $o['max_avatars'] ) );
 		$o['breakout_min']   = max( 0, (int) $o['breakout_min'] );
 		$o['default_view']   = 'list' === $o['default_view'] ? 'list' : 'calendar';
+		$o['track_settings'] = self::parse_track_settings( $o['track_settings'], $o['track_widths'] );
 		$o['freeze']         = in_array( $o['freeze'], [ 'both', 'time', 'headers', 'none' ], true ) ? $o['freeze'] : 'both';
 		$o['freeze_offset']  = is_numeric( $o['freeze_offset'] ) ? (string) max( 0, (int) $o['freeze_offset'] ) : '';
 		$o['height']         = preg_match( '/^\d+(\.\d+)?(px|rem|em|vh|dvh|svh|lvh|%)$/', trim( (string) $o['height'] ) ) ? trim( $o['height'] ) : '';
@@ -237,6 +245,121 @@ class Agenda_Renderer {
 
 		return '<div class="ba-filters" role="group" aria-label="Filter the agenda">' . $out
 			. '<button type="button" class="ba-filters__clear" hidden>Clear</button></div>';
+	}
+
+	/**
+	 * Per-track settings: width, fixed width, sponsor logo override, sponsor
+	 * link and hiding the logo. From the Bricks "Tracks" repeater, and/or the
+	 * shortcode's track_widths="Main Stage:20rem|Hall A:300px!" (! = fixed).
+	 *
+	 * @param mixed  $rows   Repeater rows.
+	 * @param string $widths Shortcode widths.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function parse_track_settings( $rows, $widths ) {
+		$out = [];
+
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			if ( ! is_array( $row ) || '' === trim( (string) ( $row['track'] ?? '' ) ) ) {
+				continue;
+			}
+			$out[] = [
+				'track'     => trim( (string) $row['track'] ),
+				'width'     => self::css_length( $row['width'] ?? '' ),
+				'fixed'     => ! empty( $row['fixed'] ),
+				'logo'      => (string) ( $row['logo'] ?? '' ),
+				'link'      => (string) ( $row['link'] ?? '' ),
+				'hide_logo' => ! empty( $row['hide_logo'] ),
+			];
+		}
+
+		foreach ( array_filter( array_map( 'trim', explode( '|', (string) $widths ) ) ) as $pair ) {
+			$parts = array_map( 'trim', explode( ':', $pair, 2 ) );
+			if ( 2 !== count( $parts ) || '' === $parts[0] ) {
+				continue;
+			}
+			$fixed = '!' === substr( $parts[1], -1 );
+			$out[] = [
+				'track'     => $parts[0],
+				'width'     => self::css_length( rtrim( $parts[1], '!' ) ),
+				'fixed'     => $fixed,
+				'logo'      => '',
+				'link'      => '',
+				'hide_logo' => false,
+			];
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Accept only plain CSS lengths such as 18rem, 300px or 25%.
+	 */
+	private static function css_length( $value ) {
+		$value = trim( (string) $value );
+		if ( preg_match( '/^\d+(\.\d+)?$/', $value ) ) {
+			$value .= 'px';
+		}
+		return preg_match( '/^\d+(\.\d+)?(px|rem|em|%|vw|ch)$/', $value ) ? $value : '';
+	}
+
+	/**
+	 * The settings row for a column, matched by track name or Brella track id.
+	 */
+	private static function track_setting( $tid, array $track, array $o ) {
+		$found = null;
+		foreach ( $o['track_settings'] as $row ) {
+			$want = strtolower( $row['track'] );
+			if ( strtolower( trim( $track['name'] ) ) === $want
+				|| ( ! empty( $track['brella_id'] ) && strtolower( (string) $track['brella_id'] ) === $want )
+				|| strtolower( (string) $tid ) === $want ) {
+				// Later rows fill in anything earlier rows left blank.
+				$found = $found ? array_merge( $found, array_filter( $row ) ) : $row;
+			}
+		}
+		return $found;
+	}
+
+	/**
+	 * Sponsor logo(s) for a track header.
+	 */
+	private static function track_sponsor_html( array $track, $setting, array $o ) {
+		if ( ! $o['show_track_sponsors'] || ( $setting && $setting['hide_logo'] ) ) {
+			return '';
+		}
+
+		$logos = [];
+		if ( $setting && '' !== $setting['logo'] ) {
+			$logos[] = [
+				'logo' => $setting['logo'],
+				'name' => '',
+				'link' => $setting['link'],
+			];
+		} else {
+			foreach ( (array) ( $track['sponsors'] ?? [] ) as $sp ) {
+				if ( ! empty( $sp['logo'] ) ) {
+					$logos[] = [
+						'logo' => $sp['logo'],
+						'name' => (string) ( $sp['name'] ?? '' ),
+						'link' => $setting && '' !== $setting['link'] ? $setting['link'] : (string) ( $sp['website'] ?? '' ),
+					];
+				}
+			}
+		}
+
+		if ( ! $logos ) {
+			return '';
+		}
+
+		$html = '<span class="ba-track-sponsor">';
+		foreach ( array_slice( $logos, 0, 3 ) as $l ) {
+			$alt = '' !== $l['name'] ? 'Sponsored by ' . $l['name'] : 'Track sponsor';
+			$img = '<img src="' . esc_url( $l['logo'] ) . '" alt="' . esc_attr( $alt ) . '" loading="lazy" decoding="async">';
+			$html .= '' !== $l['link']
+				? '<a class="ba-track-sponsor__logo" href="' . esc_url( $l['link'] ) . '" target="_blank" rel="noopener sponsored">' . $img . '</a>'
+				: '<span class="ba-track-sponsor__logo">' . $img . '</span>';
+		}
+		return $html . '</span>';
 	}
 
 	/**
@@ -484,10 +607,17 @@ class Agenda_Renderer {
 			$col_start[ $tid ] = $col;
 			$n                 = $lanes[ $tid ];
 			$fr                = rtrim( rtrim( number_format( 1 / $n, 4, '.', '' ), '0' ), '.' );
+			$setting           = self::track_setting( $tid, $t, $o );
+			$width             = $setting ? $setting['width'] : '';
+			$min               = '' !== $width ? $width : 'var(--ba-track-min)';
+
 			for ( $i = 0; $i < $n; $i++ ) {
-				$cols[]      = 1 === $n
-					? 'minmax(var(--ba-track-min), 1fr)'
-					: "minmax(calc(var(--ba-track-min) / {$n}), {$fr}fr)";
+				$lane_min = 1 === $n ? $min : "calc({$min} / {$n})";
+				if ( '' !== $width && $setting['fixed'] ) {
+					$cols[] = $lane_min; // Fixed: never stretches.
+				} else {
+					$cols[] = 1 === $n ? "minmax({$min}, 1fr)" : "minmax({$lane_min}, {$fr}fr)";
+				}
 				$col_track[] = (string) $tid;
 			}
 			$col += $n;
@@ -518,13 +648,16 @@ class Agenda_Renderer {
 
 		// Track headers.
 		foreach ( $day_tracks as $tid => $t ) {
-			$html .= sprintf(
-				'<div class="ba-track-head" style="grid-column:%d / span %d;%s" data-track="%s"><span>%s</span></div>',
+			$sponsor = self::track_sponsor_html( $t, self::track_setting( $tid, $t, $o ), $o );
+			$html   .= sprintf(
+				'<div class="ba-track-head%s" style="grid-column:%d / span %d;%s" data-track="%s"><span class="ba-track-head__name">%s</span>%s</div>',
+				'' !== $sponsor ? ' has-sponsor' : '',
 				$col_start[ $tid ],
 				$lanes[ $tid ],
 				esc_attr( self::accent_css( $t['color'] ) ),
 				esc_attr( $tid ),
-				esc_html( $t['name'] )
+				esc_html( $t['name'] ),
+				$sponsor
 			);
 		}
 

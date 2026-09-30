@@ -205,6 +205,8 @@ class Agenda_Source {
 					'color'        => (string) ( $row['track_color'] ?? '' ),
 					'type'         => 'ContentTrack',
 					'description'  => '',
+					'brella_id'    => $track_id,
+					'sponsors'     => array_values( array_filter( (array) ( $row['track_sponsors'] ?? [] ), 'is_array' ) ),
 				];
 			}
 			return self::named_column( 'Sessions' );
@@ -230,6 +232,8 @@ class Agenda_Source {
 			'color'        => '',
 			'type'         => 'ContentTrack',
 			'description'  => '',
+			'brella_id'    => '',
+			'sponsors'     => [],
 		];
 	}
 }
