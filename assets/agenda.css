@@ -12,6 +12,57 @@
 	--ba-radius: 10px;
 	--ba-avatar-size: 1.35rem;
 	--ba-sponsor-h: 1.75rem;      /* height of sponsor logos in track headers */
+
+	/* Session cards */
+	--ba-card-pad-y: 0.45rem;
+	--ba-card-pad-x: 0.6rem;
+	--ba-card-border: 3px;
+	--ba-avatar-size-compact: 1.2rem;
+	--ba-avatar-size-short: 1.1rem;
+	--ba-card-hover-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.35);
+	--ba-live-label: "Live";
+	--ba-live-fg: var(--ba-bg);
+	--ba-live-ring: 2px;
+
+	/* Grid */
+	--ba-head-pad-top: 0.9rem;
+	--ba-head-pad-x: 0.75rem;
+	--ba-head-pad-bottom: 0.7rem;
+	--ba-head-line: 3px;
+	--ba-time-pad-top: 0.2rem;
+	--ba-time-pad-x: 0.75rem;
+	--ba-line-style: dashed;
+	--ba-hour-line-style: solid;
+	--ba-line-width: 1px;
+
+	/* Top bar */
+	--ba-pill-radius: 999px;
+	--ba-pill-pad-y: 0.5em;
+	--ba-pill-pad-x: 1.1em;
+	--ba-bar-gap: 1rem;
+	--ba-bar-item-gap: 0.5rem;
+
+	/* List view */
+	--ba-list-time-w: 9.5rem;
+	--ba-list-pad-y: 0.8rem;
+	--ba-list-pad-x: 1rem;
+	--ba-list-title-size: 1.05rem;
+
+	/* Details popup */
+	--ba-dialog-radius: calc(var(--ba-radius) + 4px);
+	--ba-backdrop: rgb(5 6 10 / 0.6);
+	--ba-backdrop-blur: 3px;
+	--ba-close-size: 2.25rem;
+	--ba-cover-h: auto;
+	--ba-cover-max-h: none;
+	--ba-cover-fit: cover;
+	--ba-dialog-w: 40rem;
+	--ba-dialog-pad: 1.75rem;
+	--ba-dialog-bg: var(--ba-surface);
+	--ba-dialog-title-size: 1.5rem;
+	--ba-speaker-photo: 48px;
+	--ba-speaker-radius: 50%;
+	--ba-speaker-gap: 0.75rem;
 	--ba-max-h: none;         /* set e.g. 80vh to make track headers stick while scrolling */
 	--ba-h: auto;             /* fixed agenda height; the grid scrolls inside it */
 	--ba-breakout: 0px;       /* set by JS: distance from the container's right edge to the viewport */
@@ -119,12 +170,12 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 0.75rem 1.5rem;
-	padding-bottom: 1rem;
+	padding-bottom: var(--ba-bar-gap);
 }
 
 .ba-tabs {
 	display: flex;
-	gap: 0.5rem;
+	gap: var(--ba-bar-item-gap);
 	overflow-x: auto;
 	min-width: 0;
 	flex: 0 0 auto;
@@ -142,7 +193,7 @@
 	flex-wrap: nowrap;
 	align-items: center;
 	justify-content: flex-end;
-	gap: 0.5rem;
+	gap: var(--ba-bar-item-gap);
 	margin-left: auto;
 	min-width: 0;
 	flex: 1 1 auto;
@@ -181,8 +232,8 @@
 	color: var(--ba-muted);
 	background: transparent;
 	border: 1px solid var(--ba-line-strong);
-	border-radius: 999px;
-	padding: 0.5em 2.3em 0.5em 1.1em;
+	border-radius: var(--ba-pill-radius);
+	padding: var(--ba-pill-pad-y) calc(var(--ba-pill-pad-x) + 1.2em) var(--ba-pill-pad-y) var(--ba-pill-pad-x);
 	width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -291,7 +342,7 @@
 	padding: 3px;
 	gap: 2px;
 	border: 1px solid var(--ba-line-strong);
-	border-radius: 999px;
+	border-radius: var(--ba-pill-radius);
 }
 
 .ba-filters + .ba-view {
@@ -312,8 +363,8 @@
 	color: var(--ba-muted);
 	background: transparent;
 	border: 0;
-	border-radius: 999px;
-	padding: 0.4em 0.9em;
+	border-radius: var(--ba-pill-radius);
+	padding: calc(var(--ba-pill-pad-y) * 0.8) calc(var(--ba-pill-pad-x) - 0.2em);
 	cursor: pointer;
 	transition: background-color 0.15s, color 0.15s;
 }
@@ -336,14 +387,12 @@
 	display: none;
 }
 
-@media (max-width: 1100px) {
-	.ba-view__btn span {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-	}
+.brella-agenda.is-compact-bar .ba-view__btn span {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
 }
 
 .ba-tab {
@@ -354,8 +403,8 @@
 	color: var(--ba-muted);
 	background: transparent;
 	border: 1px solid var(--ba-line-strong);
-	border-radius: 999px;
-	padding: 0.5em 1.1em;
+	border-radius: var(--ba-pill-radius);
+	padding: var(--ba-pill-pad-y) var(--ba-pill-pad-x);
 	cursor: pointer;
 	transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
@@ -435,11 +484,11 @@
 	z-index: 3;
 	display: flex;
 	align-items: flex-end;
-	padding: 0.9rem 0.75rem 0.7rem;
+	padding: var(--ba-head-pad-top) var(--ba-head-pad-x) var(--ba-head-pad-bottom);
 	font-weight: 700;
 	font-size: var(--ba-title-size);
 	border-left: 1px solid var(--ba-line);
-	box-shadow: inset 0 -3px 0 var(--ba-accent, var(--ba-accent-default));
+	box-shadow: inset 0 calc(-1 * var(--ba-head-line)) 0 var(--ba-accent, var(--ba-accent-default));
 }
 
 /* Sponsor logo in a track header */
@@ -503,13 +552,13 @@ a.ba-track-sponsor__logo:focus-visible {
 
 .ba-line {
 	grid-column: 1 / -1;
-	border-top: 1px dashed var(--ba-line);
+	border-top: var(--ba-line-width) var(--ba-line-style) var(--ba-line);
 	pointer-events: none;
 	z-index: 0;
 }
 
 .ba-line.is-hour {
-	border-top-style: solid;
+	border-top-style: var(--ba-hour-line-style);
 	border-top-color: var(--ba-line-strong);
 }
 
@@ -520,7 +569,7 @@ a.ba-track-sponsor__logo:focus-visible {
 	z-index: 2;
 	background: var(--ba-bg);
 	border-right: 1px solid var(--ba-line);
-	padding: 0.2rem 0.75rem 0;
+	padding: var(--ba-time-pad-top) var(--ba-time-pad-x) 0;
 	font-size: var(--ba-meta-size);
 	font-variant-numeric: tabular-nums;
 	color: var(--ba-muted);
@@ -546,7 +595,7 @@ a.ba-track-sponsor__logo:focus-visible {
 }
 
 .brella-agenda.ba-freeze-head .ba-grid.is-head-stuck :is(.ba-track-head, .ba-corner) {
-	box-shadow: inset 0 -3px 0 var(--ba-accent, var(--ba-accent-default)), 0 8px 16px -10px rgb(0 0 0 / 0.45);
+	box-shadow: inset 0 calc(-1 * var(--ba-head-line)) 0 var(--ba-accent, var(--ba-accent-default)), 0 8px 16px -10px rgb(0 0 0 / 0.45);
 }
 
 .brella-agenda.ba-freeze-head .ba-grid.is-head-stuck .ba-corner {
@@ -607,7 +656,7 @@ a.ba-track-sponsor__logo:focus-visible {
 	margin: var(--ba-card-inset);
 	overflow: hidden;
 	border-radius: calc(var(--ba-radius) - 2px);
-	border-left: 3px solid var(--ba-accent);
+	border-left: var(--ba-card-border) solid var(--ba-accent);
 	--ba-card-bg: color-mix(in srgb, var(--ba-accent) var(--ba-card-mix), var(--ba-surface));
 	background: var(--ba-card-bg);
 	color: var(--ba-text);
@@ -618,7 +667,7 @@ a.ba-track-sponsor__logo:focus-visible {
 	display: flex;
 	flex-direction: column;
 	gap: 0.2rem;
-	padding: 0.45rem 0.6rem;
+	padding: var(--ba-card-pad-y) var(--ba-card-pad-x);
 }
 
 .ba-session__time {
@@ -763,7 +812,7 @@ a.ba-track-sponsor__logo:focus-visible {
 .ba-grid .ba-session.is-short .ba-avatars {
 	order: 3;
 	align-self: center;
-	--ba-avatar-size: 1.1rem;
+	--ba-avatar-size: var(--ba-avatar-size-short);
 }
 
 .ba-grid .ba-session.is-short .ba-avatar {
@@ -771,7 +820,7 @@ a.ba-track-sponsor__logo:focus-visible {
 }
 
 .ba-grid .ba-session.is-compact .ba-avatars {
-	--ba-avatar-size: 1.2rem;
+	--ba-avatar-size: var(--ba-avatar-size-compact);
 }
 
 /* Short sessions: one line until hovered or focused, then expand to fit. */
@@ -821,7 +870,7 @@ a.ba-track-sponsor__logo:focus-visible {
 		min-height: calc(100% - 2 * var(--ba-card-inset));
 		overflow: visible;
 		z-index: 6;
-		box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.35);
+		box-shadow: var(--ba-card-hover-shadow);
 		background: color-mix(in srgb, var(--ba-accent) var(--ba-card-mix), var(--ba-surface));
 	}
 
@@ -895,16 +944,24 @@ a.ba-track-sponsor__logo:focus-visible {
 .ba-session.is-networking {
 	background: transparent;
 	border: 1px dashed var(--ba-line-strong);
-	border-left: 3px solid var(--ba-accent);
+	border-left: var(--ba-card-border) solid var(--ba-accent);
 }
 
 /* Live now */
+.brella-agenda.ba-hide-live .ba-session.is-live .ba-session__time::after {
+	display: none;
+}
+
+.brella-agenda.ba-hide-live-ring .ba-session.is-live {
+	box-shadow: none;
+}
+
 .ba-session.is-live {
-	box-shadow: 0 0 0 2px var(--ba-accent);
+	box-shadow: 0 0 0 var(--ba-live-ring) var(--ba-accent);
 }
 
 .ba-session.is-live .ba-session__time::after {
-	content: "Live";
+	content: var(--ba-live-label);
 	margin-left: 0.35em;
 	padding: 0.05em 0.5em;
 	border-radius: 999px;
@@ -912,8 +969,8 @@ a.ba-track-sponsor__logo:focus-visible {
 	font-weight: 800;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: var(--ba-bg);
-	background: var(--ba-accent);
+	color: var(--ba-live-fg);
+	background: var(--ba-live-bg, var(--ba-accent));
 }
 
 /* ---------- Mobile list mode (toggled by JS below the breakpoint) ---------- */
@@ -930,7 +987,7 @@ a.ba-track-sponsor__logo:focus-visible {
 .brella-agenda.is-list .ba-grid {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
+	gap: var(--ba-list-gap, 0.6rem);
 	min-width: 0;
 }
 
@@ -970,16 +1027,16 @@ a.ba-track-sponsor__logo:focus-visible {
 
 /* List view on wider screens: time on the left, details in the middle, avatars on the right */
 .brella-agenda.is-list:not(.is-narrow) .ba-grid {
-	gap: 0.5rem;
+	gap: var(--ba-list-gap, 0.5rem);
 }
 
 .brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__inner {
 	display: grid;
-	grid-template-columns: 9.5rem minmax(0, 1fr) auto;
+	grid-template-columns: var(--ba-list-time-w) minmax(0, 1fr) auto;
 	column-gap: 1.25rem;
 	row-gap: 0.2rem;
 	align-items: start;
-	padding: 0.8rem 1rem;
+	padding: var(--ba-list-pad-y) var(--ba-list-pad-x);
 }
 
 .brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__top {
@@ -1003,12 +1060,12 @@ a.ba-track-sponsor__logo:focus-visible {
 	grid-column: 3;
 	grid-row: 1 / span 8;
 	margin: 0;
-	--ba-avatar-size: 2rem;
+	--ba-avatar-size: var(--ba-list-avatar, 2rem);
 }
 
 .brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__title,
 .brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__open {
-	font-size: 1.05rem;
+	font-size: var(--ba-list-title-size);
 }
 
 /* List mode shows every card in full */
@@ -1017,7 +1074,7 @@ a.ba-track-sponsor__logo:focus-visible {
 }
 
 .brella-agenda.is-list .ba-session .ba-avatars {
-	--ba-avatar-size: 1.6rem;
+	--ba-avatar-size: var(--ba-list-avatar, 1.6rem);
 }
 
 .brella-agenda.is-list .ba-session:is(.is-compact, .is-medium) :is(.ba-session__subtitle, .ba-session__location, .ba-session__speakers, .ba-session__speaker-names, .ba-session__excerpt) {
@@ -1032,19 +1089,19 @@ a.ba-track-sponsor__logo:focus-visible {
 /* ---------- Detail dialog ---------- */
 
 .ba-dialog {
-	width: min(40rem, calc(100vw - 2rem));
+	width: min(var(--ba-dialog-w), calc(100vw - 2rem));
 	max-height: calc(100dvh - 2rem);
 	padding: 0;
 	border: 1px solid var(--ba-line-strong);
-	border-radius: calc(var(--ba-radius) + 4px);
-	background: var(--ba-surface);
+	border-radius: var(--ba-dialog-radius);
+	background: var(--ba-dialog-bg);
 	color: var(--ba-text);
 	box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.5);
 }
 
 .ba-dialog::backdrop {
-	background: rgb(5 6 10 / 0.6);
-	backdrop-filter: blur(3px);
+	background: var(--ba-backdrop, rgb(5 6 10 / 0.6));
+	backdrop-filter: blur(var(--ba-backdrop-blur, 3px));
 }
 
 .ba-dialog__close {
@@ -1052,12 +1109,12 @@ a.ba-track-sponsor__logo:focus-visible {
 	top: 0;
 	float: right;
 	margin: 0.75rem 0.75rem 0 0;
-	width: 2.25rem;
-	height: 2.25rem;
+	width: var(--ba-close-size);
+	height: var(--ba-close-size);
 	border: 0;
 	border-radius: 50%;
 	font: inherit;
-	font-size: 1.4rem;
+	font-size: calc(var(--ba-close-size) * 1.4 / 2.25);
 	line-height: 1;
 	color: var(--ba-text);
 	background: var(--ba-head-bg);
@@ -1066,7 +1123,7 @@ a.ba-track-sponsor__logo:focus-visible {
 }
 
 .ba-dialog__body {
-	padding: 1.75rem;
+	padding: var(--ba-dialog-pad);
 	display: flex;
 	flex-direction: column;
 	gap: 0.85rem;
@@ -1096,15 +1153,21 @@ a.ba-track-sponsor__logo:focus-visible {
 
 .brella-agenda .ba-detail__title,
 .ba-dialog .ba-detail__title {
-	font-size: 1.5rem;
+	font-size: var(--ba-dialog-title-size);
 	line-height: 1.2;
 	margin: 0;
 }
 
 .ba-detail__cover {
 	width: 100%;
-	height: auto;
+	height: var(--ba-cover-h);
+	max-height: var(--ba-cover-max-h);
+	object-fit: var(--ba-cover-fit);
 	border-radius: var(--ba-radius);
+}
+
+.brella-agenda.ba-hide-cover .ba-detail__cover {
+	display: none;
 }
 
 .ba-detail__content {
@@ -1127,19 +1190,19 @@ a.ba-track-sponsor__logo:focus-visible {
 .ba-speaker {
 	display: flex;
 	align-items: center;
-	gap: 0.75rem;
+	gap: var(--ba-speaker-gap);
 }
 
 .ba-speaker__photo {
-	width: 48px;
-	height: 48px;
-	border-radius: 50%;
+	width: var(--ba-speaker-photo);
+	height: var(--ba-speaker-photo);
+	border-radius: var(--ba-speaker-radius);
 	object-fit: cover;
 	flex: 0 0 auto;
 }
 
 .ba-speaker__photo--initials {
-	font-size: 1rem;
+	font-size: calc(var(--ba-speaker-photo) * 0.33);
 	background: color-mix(in srgb, var(--ba-accent, var(--ba-accent-default)) 40%, var(--ba-surface));
 }
 
@@ -1169,7 +1232,7 @@ a.ba-track-sponsor__logo:focus-visible {
 .ba-tag {
 	font-size: var(--ba-meta-size);
 	padding: 0.2em 0.7em;
-	border-radius: 999px;
+	border-radius: var(--ba-pill-radius);
 	border: 1px solid var(--ba-line-strong);
 	color: var(--ba-muted);
 }
