@@ -32,6 +32,8 @@ class Agenda_Element extends \Bricks\Element {
 		$this->control_groups['source']   = [ 'title' => esc_html__( 'Brella data', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['grid']     = [ 'title' => esc_html__( 'Time grid', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['tracks']   = [ 'title' => esc_html__( 'Tracks (theatres)', 'cryptocon-brella' ), 'tab' => 'content' ];
+		$this->control_groups['bar']      = [ 'title' => esc_html__( 'Top bar (days, filters, switch)', 'cryptocon-brella' ), 'tab' => 'content' ];
+		$this->control_groups['listview'] = [ 'title' => esc_html__( 'List view', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['filters']  = [ 'title' => esc_html__( 'Filters', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['cards']    = [ 'title' => esc_html__( 'Session cards', 'cryptocon-brella' ), 'tab' => 'content' ];
 		$this->control_groups['popup']    = [ 'title' => esc_html__( 'Details popup', 'cryptocon-brella' ), 'tab' => 'content' ];
@@ -584,6 +586,183 @@ class Agenda_Element extends \Bricks\Element {
 			];
 		}
 
+		/* ----- Session cards: spacing, border, avatars, hover, Live ----- */
+
+		$this->add_size_controls( 'cards', [
+			'card_pad_y'          => [ 'Card padding (top and bottom)', '--ba-card-pad-y', '0.45rem' ],
+			'card_pad_x'          => [ 'Card padding (sides)', '--ba-card-pad-x', '0.6rem' ],
+			'card_border'         => [ 'Coloured left border width', '--ba-card-border', '3px', 'Use 0 to remove it.' ],
+			'avatar_size_compact' => [ 'Avatar size on short cards (15 to 20 min)', '--ba-avatar-size-compact', '1.2rem' ],
+			'avatar_size_short'   => [ 'Avatar size on one-line cards (10 min or less)', '--ba-avatar-size-short', '1.1rem' ],
+		] );
+
+		$this->controls['card_hover_shadow'] = [
+			'tab'   => 'content',
+			'group' => 'cards',
+			'label' => esc_html__( 'Card shadow on hover', 'cryptocon-brella' ),
+			'type'  => 'box-shadow',
+			'css'   => [ [ 'property' => 'box-shadow', 'selector' => '.ba-grid .ba-session:hover' ] ],
+		];
+
+		$this->add_separator( 'cards', 'live_sep', esc_html__( 'Live now', 'cryptocon-brella' ) );
+
+		$this->controls['live_label'] = [
+			'tab'         => 'content',
+			'group'       => 'cards',
+			'label'       => esc_html__( 'Live badge text', 'cryptocon-brella' ),
+			'type'        => 'text',
+			'placeholder' => 'Live',
+			'inline'      => true,
+		];
+
+		$this->controls['hide_live'] = [
+			'tab'   => 'content',
+			'group' => 'cards',
+			'label' => esc_html__( 'Hide the Live badge', 'cryptocon-brella' ),
+			'type'  => 'checkbox',
+		];
+
+		$this->controls['hide_live_ring'] = [
+			'tab'   => 'content',
+			'group' => 'cards',
+			'label' => esc_html__( 'Hide the outline on live sessions', 'cryptocon-brella' ),
+			'type'  => 'checkbox',
+		];
+
+		$this->controls['live_bg'] = [
+			'tab'         => 'content',
+			'group'       => 'cards',
+			'label'       => esc_html__( 'Live badge background', 'cryptocon-brella' ),
+			'type'        => 'color',
+			'css'         => [ [ 'property' => '--ba-live-bg' ] ],
+			'description' => esc_html__( 'Leave empty to use each session\'s track colour.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['live_fg'] = [
+			'tab'   => 'content',
+			'group' => 'cards',
+			'label' => esc_html__( 'Live badge text colour', 'cryptocon-brella' ),
+			'type'  => 'color',
+			'css'   => [ [ 'property' => '--ba-live-fg' ] ],
+		];
+
+		$this->add_size_controls( 'cards', [
+			'live_ring' => [ 'Live outline thickness', '--ba-live-ring', '2px' ],
+		] );
+
+		/* ----- Time grid: columns, headers, time labels, lines ----- */
+
+		$this->add_separator( 'grid', 'grid_look_sep', esc_html__( 'Columns, headers and lines', 'cryptocon-brella' ) );
+
+		$this->add_size_controls( 'grid', [
+			'col_gap'         => [ 'Gap between track columns', '--ba-gap', '0px' ],
+			'head_pad_top'    => [ 'Track header padding (top)', '--ba-head-pad-top', '0.9rem' ],
+			'head_pad_bottom' => [ 'Track header padding (bottom)', '--ba-head-pad-bottom', '0.7rem' ],
+			'head_pad_x'      => [ 'Track header padding (sides)', '--ba-head-pad-x', '0.75rem' ],
+			'head_line'       => [ 'Track header underline thickness', '--ba-head-line', '3px', 'The coloured line under each track name. Use 0 to remove it.' ],
+			'time_pad_top'    => [ 'Time label padding (top)', '--ba-time-pad-top', '0.2rem' ],
+			'time_pad_x'      => [ 'Time label padding (sides)', '--ba-time-pad-x', '0.75rem' ],
+			'line_width'      => [ 'Grid line thickness', '--ba-line-width', '1px' ],
+		] );
+
+		$line_styles = [
+			'solid'  => esc_html__( 'Solid', 'cryptocon-brella' ),
+			'dashed' => esc_html__( 'Dashed', 'cryptocon-brella' ),
+			'dotted' => esc_html__( 'Dotted', 'cryptocon-brella' ),
+			'none'   => esc_html__( 'None', 'cryptocon-brella' ),
+		];
+		$this->controls['line_style'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Half-hour lines', 'cryptocon-brella' ),
+			'type'        => 'select',
+			'options'     => $line_styles,
+			'css'         => [ [ 'property' => '--ba-line-style' ] ],
+			'placeholder' => esc_html__( 'Dashed', 'cryptocon-brella' ),
+			'inline'      => true,
+		];
+		$this->controls['hour_line_style'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Hour lines', 'cryptocon-brella' ),
+			'type'        => 'select',
+			'options'     => $line_styles,
+			'css'         => [ [ 'property' => '--ba-hour-line-style' ] ],
+			'placeholder' => esc_html__( 'Solid', 'cryptocon-brella' ),
+			'inline'      => true,
+		];
+
+		/* ----- Top bar ----- */
+
+		$this->add_size_controls( 'bar', [
+			'pill_radius'   => [ 'Button corner radius', '--ba-pill-radius', '999px', 'Day tabs, filter dropdowns, the Calendar / List switch and tags. 999px gives pill ends.' ],
+			'pill_pad_y'    => [ 'Button padding (top and bottom)', '--ba-pill-pad-y', '0.5em' ],
+			'pill_pad_x'    => [ 'Button padding (sides)', '--ba-pill-pad-x', '1.1em' ],
+			'bar_item_gap'  => [ 'Gap between buttons', '--ba-bar-item-gap', '0.5rem' ],
+			'bar_gap'       => [ 'Gap between the bar and the agenda', '--ba-bar-gap', '1rem' ],
+		] );
+
+		$this->controls['compact_bar'] = [
+			'tab'         => 'content',
+			'group'       => 'bar',
+			'label'       => esc_html__( 'Switch shows icons only below (px)', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'placeholder' => '1100',
+			'description' => esc_html__( 'Below this agenda width the Calendar / List switch drops its text labels to save space. Use 0 to always show the labels.', 'cryptocon-brella' ),
+		];
+
+		/* ----- List view ----- */
+
+		$this->add_size_controls( 'listview', [
+			'list_time_w'     => [ 'Time column width', '--ba-list-time-w', '9.5rem' ],
+			'list_pad_y'      => [ 'Row padding (top and bottom)', '--ba-list-pad-y', '0.8rem' ],
+			'list_pad_x'      => [ 'Row padding (sides)', '--ba-list-pad-x', '1rem' ],
+			'list_gap'        => [ 'Gap between rows', '--ba-list-gap', '0.5rem' ],
+			'list_avatar'     => [ 'Avatar size', '--ba-list-avatar', '2rem' ],
+			'list_title_size' => [ 'Session title size', '--ba-list-title-size', '1.05rem' ],
+		] );
+
+		/* ----- Details popup: frame, backdrop, close button, cover image ----- */
+
+		$this->add_separator( 'popup', 'popup_frame_sep', esc_html__( 'Frame, backdrop and cover image', 'cryptocon-brella' ) );
+
+		$this->add_size_controls( 'popup', [
+			'popup_radius'   => [ 'Popup corner radius', '--ba-dialog-radius', '14px' ],
+			'backdrop_blur'  => [ 'Backdrop blur', '--ba-backdrop-blur', '3px' ],
+			'close_size'     => [ 'Close button size', '--ba-close-size', '2.25rem' ],
+			'cover_h'        => [ 'Cover image height', '--ba-cover-h', 'auto', 'The session cover image from Brella, when there is one.' ],
+			'cover_max_h'    => [ 'Cover image max height', '--ba-cover-max-h', 'none' ],
+		] );
+
+		$this->controls['backdrop_colour'] = [
+			'tab'   => 'content',
+			'group' => 'popup',
+			'label' => esc_html__( 'Backdrop colour', 'cryptocon-brella' ),
+			'type'  => 'color',
+			'css'   => [ [ 'property' => '--ba-backdrop' ] ],
+		];
+
+		$this->controls['cover_fit'] = [
+			'tab'         => 'content',
+			'group'       => 'popup',
+			'label'       => esc_html__( 'Cover image fit', 'cryptocon-brella' ),
+			'type'        => 'select',
+			'options'     => [
+				'cover'   => esc_html__( 'Fill (crop)', 'cryptocon-brella' ),
+				'contain' => esc_html__( 'Fit (no crop)', 'cryptocon-brella' ),
+			],
+			'css'         => [ [ 'property' => '--ba-cover-fit' ] ],
+			'placeholder' => esc_html__( 'Fill (crop)', 'cryptocon-brella' ),
+			'inline'      => true,
+		];
+
+		$this->controls['hide_cover'] = [
+			'tab'   => 'content',
+			'group' => 'popup',
+			'label' => esc_html__( 'Hide the cover image', 'cryptocon-brella' ),
+			'type'  => 'checkbox',
+		];
+
 		/* ----- Colours ----- */
 
 		$this->controls['theme'] = [
@@ -613,17 +792,46 @@ class Agenda_Element extends \Bricks\Element {
 			'--ba-c-orange'       => 'Brella "orange" tracks',
 			'--ba-c-red'          => 'Brella "red" tracks',
 			'--ba-c-purple'       => 'Brella "purple" tracks',
+			'--ba-c-pink'         => 'Brella "pink" tracks',
+			'--ba-c-teal'         => 'Brella "teal" tracks',
+			'--ba-c-violet'       => 'Brella "violet" tracks',
+			'--ba-c-grey'         => 'Brella "grey" / "gray" tracks',
 		];
 
 		foreach ( $colour_vars as $var => $label ) {
+			$css = [ [ 'property' => $var ] ];
+			if ( '--ba-c-grey' === $var ) {
+				$css[] = [ 'property' => '--ba-c-gray' ];
+			}
 			$this->controls[ 'colour' . str_replace( '-', '_', $var ) ] = [
 				'tab'   => 'content',
 				'group' => 'colours',
 				'label' => $label,
 				'type'  => 'color',
-				'css'   => [ [ 'property' => $var ] ],
+				'css'   => $css,
 			];
 		}
+
+		$this->controls['extra_colours'] = [
+			'tab'           => 'content',
+			'group'         => 'colours',
+			'label'         => esc_html__( 'Other Brella track colours', 'cryptocon-brella' ),
+			'type'          => 'repeater',
+			'titleProperty' => 'name',
+			'placeholder'   => esc_html__( 'Colour', 'cryptocon-brella' ),
+			'description'   => esc_html__( 'For any other colour name Brella gives a track. Without a row here, those tracks use the Fallback accent.', 'cryptocon-brella' ),
+			'fields'        => [
+				'name'   => [
+					'label'       => esc_html__( 'Brella colour name', 'cryptocon-brella' ),
+					'type'        => 'text',
+					'placeholder' => 'lime',
+				],
+				'colour' => [
+					'label' => esc_html__( 'Colour', 'cryptocon-brella' ),
+					'type'  => 'color',
+				],
+			],
+		];
 
 		$this->controls['card_mix'] = [
 			'tab'         => 'content',
@@ -646,6 +854,12 @@ class Agenda_Element extends \Bricks\Element {
 			'type_tabs'     => [ 'Day tabs', '.ba-tab' ],
 			'type_filters'  => [ 'Filter dropdowns', '.ba-filter__select' ],
 		];
+
+		$this->add_size_controls( 'type', [
+			'base_font_size' => [ 'Base text size', '--ba-font-size', '0.875rem', 'Everything in the agenda sizes from these three unless a typography setting below overrides it.' ],
+			'card_title_size' => [ 'Session and track title size', '--ba-title-size', '0.95rem' ],
+			'meta_size'      => [ 'Small text size', '--ba-meta-size', '0.75rem', 'Times, locations, speakers, labels.' ],
+		] );
 
 		foreach ( $type_targets as $key => $t ) {
 			$this->controls[ $key ] = [
@@ -699,6 +913,56 @@ class Agenda_Element extends \Bricks\Element {
 			esc_html( $sync ? $sync : 'never' ),
 			$url
 		);
+	}
+
+	/**
+	 * Add a set of number-with-units controls that each set one CSS custom property.
+	 *
+	 * @param string $group Control group.
+	 * @param array  $items key => [ label, property, placeholder, description ].
+	 */
+	private function add_size_controls( $group, array $items ) {
+		foreach ( $items as $key => $c ) {
+			$this->controls[ $key ] = [
+				'tab'         => 'content',
+				'group'       => $group,
+				'label'       => $c[0],
+				'type'        => 'number',
+				'units'       => true,
+				'css'         => [ [ 'property' => $c[1] ] ],
+				'placeholder' => $c[2],
+			] + ( ! empty( $c[3] ) ? [ 'description' => $c[3] ] : [] );
+		}
+	}
+
+	/**
+	 * "Other Brella track colours" repeater into name => CSS colour.
+	 *
+	 * @param mixed $rows Repeater value.
+	 * @return array<int,array{name:string,colour:string}>
+	 */
+	private static function colours_from( $rows ) {
+		$out = [];
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$c = $row['colour'] ?? '';
+			if ( is_array( $c ) ) {
+				$c = $c['raw'] ?? ( $c['rgb'] ?? ( $c['hex'] ?? '' ) );
+			}
+			$out[] = [ 'name' => (string) ( $row['name'] ?? '' ), 'colour' => (string) $c ];
+		}
+		return $out;
+	}
+
+	private function add_separator( $group, $key, $label ) {
+		$this->controls[ $key ] = [
+			'tab'   => 'content',
+			'group' => $group,
+			'label' => $label,
+			'type'  => 'separator',
+		];
 	}
 
 	/**
@@ -784,6 +1048,12 @@ class Agenda_Element extends \Bricks\Element {
 				'view_toggle'        => ! $bool( 'hide_view_toggle' ),
 				'show_track_sponsors' => ! $bool( 'hide_track_sponsors' ),
 				'track_fixed'        => $bool( 'track_fixed' ),
+				'live_label'         => $s['live_label'] ?? '',
+				'hide_live'          => $bool( 'hide_live' ),
+				'hide_live_ring'     => $bool( 'hide_live_ring' ),
+				'hide_cover'         => $bool( 'hide_cover' ),
+				'compact_bar'        => isset( $s['compact_bar'] ) && '' !== $s['compact_bar'] ? $s['compact_bar'] : 1100,
+				'extra_colours'      => self::colours_from( $s['extra_colours'] ?? [] ),
 				'sponsor_position'   => $s['sponsor_position'] ?? 'above',
 				'track_settings'     => self::track_settings_from( $s['track_settings'] ?? [] ),
 				'freeze_offset'      => $s['freeze_offset'] ?? '',
@@ -794,6 +1064,10 @@ class Agenda_Element extends \Bricks\Element {
 		$this->set_attribute( '_root', 'class', explode( ' ', Agenda_Renderer::root_classes( $o ) ) );
 		foreach ( Agenda_Renderer::root_attributes( $o ) as $k => $v ) {
 			$this->set_attribute( '_root', $k, $v );
+		}
+		$style = Agenda_Renderer::root_style( $o );
+		if ( '' !== $style ) {
+			$this->set_attribute( '_root', 'style', $style );
 		}
 
 		echo "<div {$this->render_attributes( '_root' )}>" . Agenda_Renderer::render( $o ) . '</div>'; // phpcs:ignore

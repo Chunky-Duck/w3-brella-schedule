@@ -57,6 +57,12 @@ class Agenda_Renderer {
 			'track_settings'     => [],
 			'sponsor_position'   => 'above',
 			'track_fixed'        => 'false',
+			'live_label'         => '',
+			'hide_live'          => 'false',
+			'hide_live_ring'     => 'false',
+			'hide_cover'         => 'false',
+			'compact_bar'        => 1100,
+			'extra_colours'      => [],
 			'default_view'       => 'calendar',
 			'freeze_offset'      => '',
 		];
@@ -71,8 +77,9 @@ class Agenda_Renderer {
 		foreach ( self::root_attributes( $o ) as $k => $v ) {
 			$attrs .= ' ' . $k . '="' . esc_attr( $v ) . '"';
 		}
-		if ( $o['height'] ) {
-			$attrs .= ' style="' . esc_attr( '--ba-h:' . $o['height'] ) . '"';
+		$style = ( $o['height'] ? '--ba-h:' . $o['height'] . ';' : '' ) . self::root_style( $o );
+		if ( '' !== $style ) {
+			$attrs .= ' style="' . esc_attr( $style ) . '"';
 		}
 		return sprintf(
 			'<div class="%s"%s>%s</div>',
@@ -80,6 +87,42 @@ class Agenda_Renderer {
 			$attrs,
 			self::render( $o )
 		);
+	}
+
+	/**
+	 * Inline custom properties for settings that are text, not CSS values:
+	 * the Live badge wording and extra Brella track colour names.
+	 */
+	public static function root_style( array $o ) {
+		$css = '';
+		if ( '' !== $o['live_label'] ) {
+			$css .= '--ba-live-label:"' . $o['live_label'] . '";';
+		}
+		foreach ( $o['extra_colours'] as $name => $colour ) {
+			$css .= '--ba-c-' . $name . ':' . $colour . ';';
+		}
+		return $css;
+	}
+
+	/**
+	 * Extra track colours: Brella colour name => CSS colour.
+	 *
+	 * @param mixed $rows Repeater rows or name => colour pairs.
+	 * @return array<string,string>
+	 */
+	private static function parse_colours( $rows ) {
+		$out = [];
+		foreach ( is_array( $rows ) ? $rows : [] as $key => $row ) {
+			$name   = is_array( $row ) ? ( $row['name'] ?? '' ) : $key;
+			$colour = is_array( $row ) ? ( $row['colour'] ?? '' ) : $row;
+			$name   = preg_replace( '/[^a-z0-9\-]/', '', strtolower( trim( (string) $name ) ) );
+			$colour = trim( (string) $colour );
+			if ( '' === $name || ! preg_match( '/^(#[0-9a-fA-F]{3,8}|(rgb|rgba|hsl|hsla|oklch|color-mix)\([^;{}<>"]*\)|var\(--[a-zA-Z0-9\-]+\)|[a-zA-Z]+)$/', $colour ) ) {
+				continue;
+			}
+			$out[ $name ] = $colour;
+		}
+		return $out;
 	}
 
 	/**
@@ -94,6 +137,9 @@ class Agenda_Renderer {
 		if ( $o['breakout'] ) {
 			$attrs['data-breakout']     = '1';
 			$attrs['data-breakout-min'] = (string) $o['breakout_min'];
+		}
+		if ( $o['compact_bar'] ) {
+			$attrs['data-compact-bar'] = (string) $o['compact_bar'];
 		}
 		if ( '' !== $o['freeze_offset'] ) {
 			$attrs['data-freeze-offset'] = (string) $o['freeze_offset'];
@@ -111,6 +157,11 @@ class Agenda_Renderer {
 		}
 		if ( isset( $o['hscroll'] ) && ! $o['hscroll'] ) {
 			$classes[] = 'ba-no-hscroll';
+		}
+		foreach ( [ 'hide_live' => 'ba-hide-live', 'hide_live_ring' => 'ba-hide-live-ring', 'hide_cover' => 'ba-hide-cover' ] as $k => $class ) {
+			if ( ! empty( $o[ $k ] ) ) {
+				$classes[] = $class;
+			}
 		}
 		if ( 'beside' === ( $o['sponsor_position'] ?? 'above' ) ) {
 			$classes[] = 'ba-sponsor-beside';
@@ -135,7 +186,7 @@ class Agenda_Renderer {
 			return null !== $v && '' !== $v;
 		} ) );
 
-		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout', 'view_toggle', 'show_track_sponsors', 'track_fixed' ] as $k ) {
+		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout', 'view_toggle', 'show_track_sponsors', 'track_fixed', 'hide_live', 'hide_live_ring', 'hide_cover' ] as $k ) {
 			$o[ $k ] = is_bool( $o[ $k ] ) ? $o[ $k ] : filter_var( $o[ $k ], FILTER_VALIDATE_BOOLEAN );
 		}
 
@@ -146,6 +197,9 @@ class Agenda_Renderer {
 		$o['breakout_min']   = max( 0, (int) $o['breakout_min'] );
 		$o['default_view']   = 'list' === $o['default_view'] ? 'list' : 'calendar';
 		$o['track_settings'] = self::parse_track_settings( $o['track_settings'], $o['track_widths'] );
+		$o['compact_bar']    = max( 0, (int) $o['compact_bar'] );
+		$o['live_label']     = trim( str_replace( [ '"', '\\', '<', '>', ';', '{', '}' ], '', (string) $o['live_label'] ) );
+		$o['extra_colours']  = self::parse_colours( $o['extra_colours'] );
 		$o['freeze']         = in_array( $o['freeze'], [ 'both', 'time', 'headers', 'none' ], true ) ? $o['freeze'] : 'both';
 		$o['freeze_offset']  = is_numeric( $o['freeze_offset'] ) ? (string) max( 0, (int) $o['freeze_offset'] ) : '';
 		$o['height']         = preg_match( '/^\d+(\.\d+)?(px|rem|em|vh|dvh|svh|lvh|%)$/', trim( (string) $o['height'] ) ) ? trim( $o['height'] ) : '';

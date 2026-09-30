@@ -257,8 +257,11 @@
 			} catch (e) { /* storage unavailable */ }
 		}
 
+		var compactAt = parseInt(root.dataset.compactBar, 10) || 0;
+
 		function apply() {
 			var narrow = bp > 0 && width < bp;
+			root.classList.toggle('is-compact-bar', compactAt > 0 && width < compactAt);
 			var list = narrow || view === 'list';
 			var changed = root.classList.contains('is-list') !== list || root.classList.contains('is-narrow') !== narrow;
 			root.classList.toggle('is-list', list);

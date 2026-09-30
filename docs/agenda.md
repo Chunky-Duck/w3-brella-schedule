@@ -34,6 +34,21 @@ Under **Tracks (theatres)** in the element, **Track width (all tracks)** sets ev
 
 Sponsored tracks show the sponsor's logo from Brella automatically. The sync reads the sponsor linked to each track and, if the logo is not included with the schedule, looks it up from the event's sponsor list. **Hide sponsor logos in track headers** turns them all off; **Sponsor logo height** sizes them.
 
+## Styling in Bricks
+
+Every size, spacing and colour in the agenda has a setting on the element, and each one is a CSS custom property on `.brella-agenda` with the original look as its default:
+
+| Panel | Settings |
+| --- | --- |
+| Time grid | Row height, column gap, time column width, track header padding and underline thickness, time label padding, grid line thickness and style (half-hour and hour lines) |
+| Tracks (theatres) | Track width for all tracks, fixed width, per-track widths, sponsor logos |
+| Top bar | Button corner radius and padding (day tabs, filters, Calendar / List switch, tags), gaps, the width below which the switch shows icons only |
+| List view | Time column width, row padding, gap between rows, avatar size, session title size |
+| Session cards | Padding, coloured left border width, radius, spacing, avatar sizes on normal, short and one-line cards, hover shadow, Live badge text, colours and outline, or hide them |
+| Details popup | Width, padding, background, corner radius, backdrop colour and blur, close button size, cover image height, fit or hide, speaker photo size, shape and gap, full typography |
+| Colours | Theme colours, all twelve named Brella track colours, and any other colour name Brella uses |
+| Typography | Base, title and small text sizes, plus full font controls for each part of the grid |
+
 ## Details popup
 
 Under **Details popup** in the element: popup width, padding and background, session title size, speaker photo size (initials scale with it), photo shape (circle, rounded square, square) and the gap between photo and name. **Popup typography** has full font controls for the track/time/location line, session type, session title, description, speaker name, speaker role, speaker job title and company, and tags.
