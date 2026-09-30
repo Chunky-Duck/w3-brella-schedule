@@ -56,6 +56,7 @@ class Agenda_Renderer {
 			'track_widths'       => '',
 			'track_settings'     => [],
 			'sponsor_position'   => 'above',
+			'track_fixed'        => 'false',
 			'default_view'       => 'calendar',
 			'freeze_offset'      => '',
 		];
@@ -134,7 +135,7 @@ class Agenda_Renderer {
 			return null !== $v && '' !== $v;
 		} ) );
 
-		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout', 'view_toggle', 'show_track_sponsors' ] as $k ) {
+		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout', 'view_toggle', 'show_track_sponsors', 'track_fixed' ] as $k ) {
 			$o[ $k ] = is_bool( $o[ $k ] ) ? $o[ $k ] : filter_var( $o[ $k ], FILTER_VALIDATE_BOOLEAN );
 		}
 
@@ -611,9 +612,17 @@ class Agenda_Renderer {
 			$width             = $setting ? $setting['width'] : '';
 			$min               = '' !== $width ? $width : 'var(--ba-track-min)';
 
+			// Fixed: this track's own width with Fixed ticked, or the global
+			// "Fixed width (all tracks)" for tracks without their own width.
+			// The global option is ignored without horizontal scroll, where the
+			// shared width is zero and columns share the container instead.
+			$fixed = '' !== $width
+				? ! empty( $setting['fixed'] )
+				: ( $o['track_fixed'] && $o['hscroll'] );
+
 			for ( $i = 0; $i < $n; $i++ ) {
 				$lane_min = 1 === $n ? $min : "calc({$min} / {$n})";
-				if ( '' !== $width && $setting['fixed'] ) {
+				if ( $fixed ) {
 					$cols[] = $lane_min; // Fixed: never stretches.
 				} else {
 					$cols[] = 1 === $n ? "minmax({$min}, 1fr)" : "minmax({$lane_min}, {$fr}fr)";

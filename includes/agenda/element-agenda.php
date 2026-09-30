@@ -121,16 +121,6 @@ class Agenda_Element extends \Bricks\Element {
 			'placeholder' => '1.25rem',
 		];
 
-		$this->controls['track_min'] = [
-			'tab'         => 'content',
-			'group'       => 'grid',
-			'label'       => esc_html__( 'Track column min width', 'cryptocon-brella' ),
-			'type'        => 'number',
-			'units'       => true,
-			'css'         => [ [ 'property' => '--ba-track-min' ] ],
-			'placeholder' => '14rem',
-		];
-
 		$this->controls['time_w'] = [
 			'tab'         => 'content',
 			'group'       => 'grid',
@@ -287,6 +277,25 @@ class Agenda_Element extends \Bricks\Element {
 
 		/* ----- Tracks ----- */
 
+		$this->controls['track_min'] = [
+			'tab'         => 'content',
+			'group'       => 'tracks',
+			'label'       => esc_html__( 'Track width (all tracks)', 'cryptocon-brella' ),
+			'type'        => 'number',
+			'units'       => true,
+			'css'         => [ [ 'property' => '--ba-track-min' ] ],
+			'placeholder' => '14rem',
+			'description' => esc_html__( 'Width of every track column. Columns still stretch to fill spare space unless Fixed width is ticked. Per-track settings below override this for individual tracks.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['track_fixed'] = [
+			'tab'         => 'content',
+			'group'       => 'tracks',
+			'label'       => esc_html__( 'Fixed width (all tracks)', 'cryptocon-brella' ),
+			'type'        => 'checkbox',
+			'description' => esc_html__( 'Every column is exactly the width above and never stretches. Ignored when horizontal scroll is turned off.', 'cryptocon-brella' ),
+		];
+
 		$this->controls['hide_track_sponsors'] = [
 			'tab'         => 'content',
 			'group'       => 'tracks',
@@ -324,7 +333,7 @@ class Agenda_Element extends \Bricks\Element {
 			'type'          => 'repeater',
 			'titleProperty' => 'track',
 			'placeholder'   => esc_html__( 'Track', 'cryptocon-brella' ),
-			'description'   => esc_html__( 'Add a row per track (theatre) you want to change. Type the track name exactly as it appears in the agenda header.', 'cryptocon-brella' ),
+			'description'   => esc_html__( 'Optional. Add a row only for a track (theatre) that should differ from the settings above. Type the track name as it appears in the agenda header.', 'cryptocon-brella' ),
 			'fields'        => [
 				'track'     => [
 					'label'       => esc_html__( 'Track name', 'cryptocon-brella' ),
@@ -336,7 +345,7 @@ class Agenda_Element extends \Bricks\Element {
 					'type'        => 'number',
 					'units'       => true,
 					'placeholder' => '14rem',
-					'description' => esc_html__( 'Minimum column width. The column still grows to fill spare space unless Fixed width is ticked.', 'cryptocon-brella' ),
+					'description' => esc_html__( 'Overrides Track width (all tracks) for this track. The column still grows to fill spare space unless Fixed width is ticked.', 'cryptocon-brella' ),
 				],
 				'fixed'     => [
 					'label' => esc_html__( 'Fixed width', 'cryptocon-brella' ),
@@ -702,6 +711,7 @@ class Agenda_Element extends \Bricks\Element {
 				'default_view'       => $s['default_view'] ?? 'calendar',
 				'view_toggle'        => ! $bool( 'hide_view_toggle' ),
 				'show_track_sponsors' => ! $bool( 'hide_track_sponsors' ),
+				'track_fixed'        => $bool( 'track_fixed' ),
 				'sponsor_position'   => $s['sponsor_position'] ?? 'above',
 				'track_settings'     => self::track_settings_from( $s['track_settings'] ?? [] ),
 				'freeze_offset'      => $s['freeze_offset'] ?? '',

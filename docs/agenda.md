@@ -24,7 +24,9 @@ If the separate "Brella Agenda for Bricks" plugin is installed, W3 Brella Integr
 
 ## Tracks: widths and sponsor logos
 
-Under **Tracks (theatres)** in the element, **Per-track settings** takes one row per track you want to change (type the name as it shows in the header):
+Under **Tracks (theatres)** in the element, **Track width (all tracks)** sets every column's width (default 14rem). Columns stretch to fill spare space unless **Fixed width (all tracks)** is ticked.
+
+**Per-track settings** takes one row per track that should differ (type the name as it shows in the header):
 
 - **Width**: minimum column width. The column still grows into spare space unless **Fixed width** is ticked.
 - **Hide sponsor logo**: hide this track's sponsor logo only.
@@ -79,6 +81,7 @@ Everything the element does is also available as a shortcode, handy for a Bricks
 | view_toggle | true | Show the Calendar / List switch (Bricks: *Hide Calendar / List switch*) |
 | show_track_sponsors | true | Sponsor logo in the header of sponsored tracks (Bricks: *Hide sponsor logos in track headers*) |
 | sponsor_position | above | Sponsor logo above or beside the track name |
+| track_fixed | false | Every column exactly the track width, never stretching (Bricks: *Fixed width (all tracks)*) |
 | track_widths | | Per-track widths, e.g. `Main Stage:20rem\|Hall A:300px!` (`!` = fixed width). In Bricks use *Per-track settings* under Tracks |
 | freeze | both | Keep fixed while scrolling: both (time column and theatre headers), time, headers or none |
 | freeze_offset | auto | Gap above the pinned headers in px, e.g. for a sticky site header. Blank detects a sticky Bricks header |
