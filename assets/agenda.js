@@ -239,24 +239,55 @@
 		root._baLive = setInterval(tick, 60000);
 	}
 
-	function initListMode(root) {
-		if (root.dataset.mobile !== 'list') return;
-		var bp = parseInt(root.dataset.breakpoint, 10) || 0;
-		if (!bp) return;
+	/**
+	 * Calendar or list. The visitor's choice from the switch wins on wider
+	 * screens; below the breakpoint the list is automatic.
+	 */
+	function initView(root) {
+		var bp = root.dataset.mobile === 'list' ? (parseInt(root.dataset.breakpoint, 10) || 0) : 0;
+		var buttons = Array.prototype.slice.call(root.querySelectorAll('.ba-view__btn'));
+		var storeKey = 'brellaAgendaView';
+		var view = root.dataset.defaultView === 'list' ? 'list' : 'calendar';
+		var width = root.getBoundingClientRect().width;
 
-		function apply(width) {
-			root.classList.toggle('is-list', width < bp);
+		if (buttons.length) {
+			try {
+				var saved = window.localStorage.getItem(storeKey);
+				if (saved === 'list' || saved === 'calendar') view = saved;
+			} catch (e) { /* storage unavailable */ }
 		}
 
-		apply(root.getBoundingClientRect().width);
+		function apply() {
+			var narrow = bp > 0 && width < bp;
+			var list = narrow || view === 'list';
+			var changed = root.classList.contains('is-list') !== list || root.classList.contains('is-narrow') !== narrow;
+			root.classList.toggle('is-list', list);
+			root.classList.toggle('is-narrow', narrow);
+			buttons.forEach(function (b) {
+				b.setAttribute('aria-pressed', b.dataset.view === view ? 'true' : 'false');
+			});
+			if (changed) root.dispatchEvent(new CustomEvent('ba:layout'));
+		}
+
+		buttons.forEach(function (b) {
+			b.addEventListener('click', function () {
+				view = b.dataset.view;
+				try { window.localStorage.setItem(storeKey, view); } catch (e) { /* ignore */ }
+				apply();
+			});
+		});
+
+		apply();
 
 		if ('ResizeObserver' in window) {
 			new ResizeObserver(function (entries) {
-				apply(entries[0].contentRect.width);
+				width = entries[0].contentRect.width;
+				apply();
 			}).observe(root);
 		} else {
 			window.addEventListener('resize', function () {
-				apply(root.getBoundingClientRect().width);
+				width = root.getBoundingClientRect().width;
+				apply();
 			});
 		}
 	}
@@ -280,6 +311,7 @@
 
 		update();
 		window.addEventListener('resize', update);
+		root.addEventListener('ba:layout', update);
 		if ('ResizeObserver' in window) new ResizeObserver(update).observe(root);
 	}
 
@@ -348,6 +380,7 @@
 		window.addEventListener('resize', queue);
 		root.addEventListener('click', queue);
 		root.addEventListener('change', queue);
+		root.addEventListener('ba:layout', queue);
 		root._baFreezeUpdate = queue;
 		queue();
 	}
@@ -359,7 +392,7 @@
 		initFilters(root);
 		initDialog(root);
 		initLive(root);
-		initListMode(root);
+		initView(root);
 		initBreakout(root);
 		initFreezeHead(root);
 	}

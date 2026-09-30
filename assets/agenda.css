@@ -126,7 +126,7 @@
 	gap: 0.5rem;
 	overflow-x: auto;
 	min-width: 0;
-	flex: 0 1 auto;
+	flex: 0 0 auto;
 	max-width: 50%;
 	padding: 2px;
 	scrollbar-width: thin;
@@ -263,26 +263,87 @@
 	border: 0;
 }
 
-/* Narrow: tabs on one row, filters share the full width beneath */
-.brella-agenda.is-list .ba-bar {
+/* Narrow (auto list on small screens): tabs on one row, filters share the full width beneath */
+.brella-agenda.is-narrow .ba-bar {
 	flex-wrap: wrap;
 }
 
-.brella-agenda.is-list .ba-tabs {
+.brella-agenda.is-narrow .ba-tabs {
 	max-width: 100%;
 }
 
-.brella-agenda.is-list .ba-filters {
+.brella-agenda.is-narrow .ba-filters {
 	width: 100%;
 	margin-left: 0;
 	flex-wrap: wrap;
 	justify-content: stretch;
 }
 
-.brella-agenda.is-list .ba-filter {
+.brella-agenda.is-narrow .ba-filter {
 	flex: 1 1 10rem;
 }
 
+/* Calendar / List switch. Hidden on small screens, where the list is automatic. */
+.ba-view {
+	display: inline-flex;
+	flex: 0 0 auto;
+	padding: 3px;
+	gap: 2px;
+	border: 1px solid var(--ba-line-strong);
+	border-radius: 999px;
+}
+
+.ba-filters + .ba-view {
+	margin-left: 0;
+}
+
+.ba-tabs + .ba-view {
+	margin-left: auto;
+}
+
+.ba-view__btn {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+	font: inherit;
+	font-weight: 600;
+	color: var(--ba-muted);
+	background: transparent;
+	border: 0;
+	border-radius: 999px;
+	padding: 0.4em 0.9em;
+	cursor: pointer;
+	transition: background-color 0.15s, color 0.15s;
+}
+
+.ba-view__btn:hover {
+	color: var(--ba-text);
+}
+
+.ba-view__btn[aria-pressed="true"] {
+	color: var(--ba-bg);
+	background: var(--ba-text);
+}
+
+.ba-view__btn:focus-visible {
+	outline: 2px solid var(--ba-accent-default);
+	outline-offset: 2px;
+}
+
+.brella-agenda.is-narrow .ba-view {
+	display: none;
+}
+
+@media (max-width: 1100px) {
+	.ba-view__btn span {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+}
 
 .ba-tab {
 	appearance: none;
@@ -845,6 +906,49 @@
 .brella-agenda.is-list .ba-session.is-short :is(.ba-session__title, .ba-session__open) {
 	white-space: normal;
 	font-size: var(--ba-title-size);
+}
+
+/* List view on wider screens: time on the left, details in the middle, avatars on the right */
+.brella-agenda.is-list:not(.is-narrow) .ba-grid {
+	gap: 0.5rem;
+}
+
+.brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__inner {
+	display: grid;
+	grid-template-columns: 9.5rem minmax(0, 1fr) auto;
+	column-gap: 1.25rem;
+	row-gap: 0.2rem;
+	align-items: start;
+	padding: 0.8rem 1rem;
+}
+
+.brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__top {
+	display: contents;
+}
+
+.brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__inner > * {
+	grid-column: 2;
+}
+
+.brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__time {
+	grid-column: 1;
+	grid-row: 1 / span 8;
+	display: flex;
+	font-size: var(--ba-font-size);
+	font-weight: 600;
+	color: var(--ba-text);
+}
+
+.brella-agenda.is-list:not(.is-narrow) .ba-session .ba-avatars {
+	grid-column: 3;
+	grid-row: 1 / span 8;
+	margin: 0;
+	--ba-avatar-size: 2rem;
+}
+
+.brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__title,
+.brella-agenda.is-list:not(.is-narrow) .ba-session .ba-session__open {
+	font-size: 1.05rem;
 }
 
 /* List mode shows every card in full */

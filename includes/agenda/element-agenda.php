@@ -241,6 +241,26 @@ class Agenda_Element extends \Bricks\Element {
 			'default' => true,
 		];
 
+		$this->controls['default_view'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Opens in', 'cryptocon-brella' ),
+			'type'        => 'select',
+			'options'     => [
+				'calendar' => esc_html__( 'Calendar view', 'cryptocon-brella' ),
+				'list'     => esc_html__( 'List view', 'cryptocon-brella' ),
+			],
+			'placeholder' => esc_html__( 'Calendar view', 'cryptocon-brella' ),
+			'description' => esc_html__( 'Visitors can switch with the Calendar / List buttons; their choice is remembered in their browser.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['hide_view_toggle'] = [
+			'tab'   => 'content',
+			'group' => 'grid',
+			'label' => esc_html__( 'Hide Calendar / List switch', 'cryptocon-brella' ),
+			'type'  => 'checkbox',
+		];
+
 		$this->controls['mobile'] = [
 			'tab'     => 'content',
 			'group'   => 'grid',
@@ -570,6 +590,8 @@ class Agenda_Element extends \Bricks\Element {
 				'hscroll'            => ! $bool( 'no_hscroll' ),
 				'breakout'           => $bool( 'breakout' ),
 				'freeze'             => $s['freeze'] ?? 'both',
+				'default_view'       => $s['default_view'] ?? 'calendar',
+				'view_toggle'        => ! $bool( 'hide_view_toggle' ),
 				'freeze_offset'      => $s['freeze_offset'] ?? '',
 				'breakout_min'       => ! empty( $s['breakout_min'] ) ? $s['breakout_min'] : self::tablet_breakpoint(),
 			]

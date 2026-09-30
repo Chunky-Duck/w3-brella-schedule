@@ -51,6 +51,8 @@ class Agenda_Renderer {
 			'breakout_min'       => 991,
 			'height'             => '',
 			'freeze'             => 'both',
+			'view_toggle'        => 'true',
+			'default_view'       => 'calendar',
 			'freeze_offset'      => '',
 		];
 	}
@@ -80,8 +82,9 @@ class Agenda_Renderer {
 	 */
 	public static function root_attributes( array $o ) {
 		$attrs = [
-			'data-breakpoint' => (string) $o['breakpoint'],
-			'data-mobile'     => $o['mobile'],
+			'data-breakpoint'   => (string) $o['breakpoint'],
+			'data-mobile'       => $o['mobile'],
+			'data-default-view' => $o['default_view'],
 		];
 		if ( $o['breakout'] ) {
 			$attrs['data-breakout']     = '1';
@@ -124,7 +127,7 @@ class Agenda_Renderer {
 			return null !== $v && '' !== $v;
 		} ) );
 
-		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout' ] as $k ) {
+		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout', 'view_toggle' ] as $k ) {
 			$o[ $k ] = is_bool( $o[ $k ] ) ? $o[ $k ] : filter_var( $o[ $k ], FILTER_VALIDATE_BOOLEAN );
 		}
 
@@ -133,6 +136,7 @@ class Agenda_Renderer {
 		$o['breakpoint']     = max( 0, (int) $o['breakpoint'] );
 		$o['max_avatars']    = max( 1, min( 12, (int) $o['max_avatars'] ) );
 		$o['breakout_min']   = max( 0, (int) $o['breakout_min'] );
+		$o['default_view']   = 'list' === $o['default_view'] ? 'list' : 'calendar';
 		$o['freeze']         = in_array( $o['freeze'], [ 'both', 'time', 'headers', 'none' ], true ) ? $o['freeze'] : 'both';
 		$o['freeze_offset']  = is_numeric( $o['freeze_offset'] ) ? (string) max( 0, (int) $o['freeze_offset'] ) : '';
 		$o['height']         = preg_match( '/^\d+(\.\d+)?(px|rem|em|vh|dvh|svh|lvh|%)$/', trim( (string) $o['height'] ) ) ? trim( $o['height'] ) : '';
@@ -235,6 +239,20 @@ class Agenda_Renderer {
 			. '<button type="button" class="ba-filters__clear" hidden>Clear</button></div>';
 	}
 
+	/**
+	 * Calendar / List switch for visitors.
+	 */
+	private static function view_toggle_html( array $o ) {
+		$cal_icon  = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M1 2h4v5H1zm5 0h4v8H6zm5 0h4v4h-4zM1 8h4v6H1zm5 3h4v3H6zm5-4h4v7h-4z"/></svg>';
+		$list_icon = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M1 2h14v3H1zm0 4.5h14v3H1zM1 11h14v3H1z"/></svg>';
+		$is_list   = 'list' === $o['default_view'];
+
+		return '<div class="ba-view" role="group" aria-label="View">'
+			. '<button type="button" class="ba-view__btn" data-view="calendar" aria-pressed="' . ( $is_list ? 'false' : 'true' ) . '">' . $cal_icon . '<span>Calendar</span></button>'
+			. '<button type="button" class="ba-view__btn" data-view="list" aria-pressed="' . ( $is_list ? 'true' : 'false' ) . '">' . $list_icon . '<span>List</span></button>'
+			. '</div>';
+	}
+
 	private static function plural( $word ) {
 		$word = trim( (string) $word );
 		if ( preg_match( '/(s|x|ch|sh)$/i', $word ) ) {
@@ -331,8 +349,11 @@ class Agenda_Renderer {
 			$html .= '<div class="ba-tabs ba-tabs--single" aria-hidden="true"></div>';
 		}
 
-		// Filters (right of the bar).
+		// Filters and the calendar/list switch (right of the bar).
 		$html .= self::filters_html( $sessions, $tracks, $o, $uid );
+		if ( $o['view_toggle'] ) {
+			$html .= self::view_toggle_html( $o );
+		}
 		$html .= '</div>';
 		$html .= '<p class="ba-filter-status" aria-live="polite"></p>';
 
