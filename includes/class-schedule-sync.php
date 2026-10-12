@@ -66,12 +66,32 @@ class Schedule_Sync {
 				return $raw;
 			}
 
-			$timezone = (string) Settings::get( 'timezone', '' );
-			if ( '' === $timezone ) {
-				$fetched_tz = Api_Client::fetch_event_timezone( $creds );
-				if ( is_string( $fetched_tz ) && '' !== $fetched_tz ) {
-					$timezone = $fetched_tz;
-				}
+			// Event details (name, first and last day, time zone). A failure here
+			// never blocks the sync; the agenda then works from session times alone.
+			$event = Api_Client::fetch_event( $creds );
+			if ( is_wp_error( $event ) ) {
+				$event = array(
+					'name'          => '',
+					'start_date'    => '',
+					'end_date'      => '',
+					'time_zone_raw' => '',
+					'time_zone'     => '',
+					'error'         => $event->get_error_message(),
+				);
+			}
+
+			// Time zone: the setting overrides Brella; Brella's is used when it can
+			// be understood; otherwise the WordPress site time zone.
+			$setting_tz = Normalizer::resolve_timezone( (string) Settings::get( 'timezone', '' ) );
+			if ( '' !== $setting_tz ) {
+				$timezone        = $setting_tz;
+				$timezone_source = 'setting';
+			} elseif ( '' !== $event['time_zone'] ) {
+				$timezone        = $event['time_zone'];
+				$timezone_source = 'brella';
+			} else {
+				$timezone        = wp_timezone_string();
+				$timezone_source = '' !== $event['time_zone_raw'] ? 'site (Brella value not recognised)' : 'site (Brella sent none)';
 			}
 
 			$sessions = Normalizer::normalize_timeslots(
@@ -92,9 +112,11 @@ class Schedule_Sync {
 			Cache::save(
 				$sessions,
 				array(
-					'timezone'     => $timezone,
-					'raw_count'    => count( $raw['data'] ?? array() ),
-					'filtered_count' => count( $sessions ),
+					'timezone'        => $timezone,
+					'timezone_source' => $timezone_source,
+					'event'           => $event,
+					'raw_count'       => count( $raw['data'] ?? array() ),
+					'filtered_count'  => count( $sessions ),
 				)
 			);
 

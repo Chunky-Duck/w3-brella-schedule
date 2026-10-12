@@ -61,6 +61,9 @@ class Agenda_Renderer {
 			'hide_live'          => 'false',
 			'hide_live_ring'     => 'false',
 			'hide_cover'         => 'false',
+			'session_days_only'  => 'false',
+			'hide_single_tab'    => 'false',
+			'empty_day_text'     => '',
 			'compact_bar'        => 1100,
 			'extra_colours'      => [],
 			'default_view'       => 'calendar',
@@ -186,7 +189,7 @@ class Agenda_Renderer {
 			return null !== $v && '' !== $v;
 		} ) );
 
-		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout', 'view_toggle', 'show_track_sponsors', 'track_fixed', 'hide_live', 'hide_live_ring', 'hide_cover' ] as $k ) {
+		foreach ( [ 'include_networking', 'hide_empty_tracks', 'show_speakers', 'show_avatars', 'show_location', 'show_subtitle', 'show_excerpt', 'show_timezone', 'show_filters', 'hscroll', 'breakout', 'view_toggle', 'show_track_sponsors', 'track_fixed', 'hide_live', 'hide_live_ring', 'hide_cover', 'session_days_only', 'hide_single_tab' ] as $k ) {
 			$o[ $k ] = is_bool( $o[ $k ] ) ? $o[ $k ] : filter_var( $o[ $k ], FILTER_VALIDATE_BOOLEAN );
 		}
 
@@ -463,8 +466,9 @@ class Agenda_Renderer {
 			return '<p class="ba-notice">Brella Agenda: ' . esc_html( $schedule->get_error_message() ) . $link . '</p>';
 		}
 
+		$tz_name = Normalizer::resolve_timezone( (string) ( $schedule['timezone'] ?? '' ) );
 		try {
-			$tz = new DateTimeZone( $schedule['timezone'] ?: wp_timezone_string() );
+			$tz = new DateTimeZone( '' !== $tz_name ? $tz_name : wp_timezone_string() );
 		} catch ( Exception $e ) {
 			$tz = wp_timezone();
 		}
@@ -494,32 +498,47 @@ class Agenda_Renderer {
 			}
 		);
 
-		// Group by local calendar date.
+		// Days: every day of the event from Brella's start and end date, plus
+		// any day a session falls on (in case a session sits outside them).
 		$days = [];
+		if ( ! $o['session_days_only'] ) {
+			foreach ( (array) ( $schedule['event_dates'] ?? [] ) as $date ) {
+				if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $date ) ) {
+					$days[ $date ] = [];
+				}
+			}
+		}
 		foreach ( $sessions as $s ) {
 			$date            = ( new DateTime( '@' . $s['start'] ) )->setTimezone( $tz )->format( 'Y-m-d' );
 			$days[ $date ][] = $s;
 		}
 		ksort( $days );
 
-		$uid    = 'ba-' . substr( md5( wp_json_encode( $o ) ), 0, 8 );
-		$today  = ( new DateTime( 'now', $tz ) )->format( 'Y-m-d' );
-		$active = isset( $days[ $today ] ) ? $today : array_key_first( $days );
+		$uid   = 'ba-' . substr( md5( wp_json_encode( $o ) ), 0, 8 );
+		$today = ( new DateTime( 'now', $tz ) )->format( 'Y-m-d' );
+		if ( ! empty( $days[ $today ] ) ) {
+			$active = $today;
+		} else {
+			$active = array_key_first( array_filter( $days ) );
+		}
+
+		$tabbed = count( $days ) > 1 || ! $o['hide_single_tab'];
 
 		$html = '<div class="ba-bar">';
 
 		// Day tabs (left of the bar).
-		if ( count( $days ) > 1 ) {
-			$html .= '<div class="ba-tabs" role="tablist" aria-label="Event days">';
-			foreach ( array_keys( $days ) as $date ) {
+		if ( $tabbed ) {
+			$html .= '<div class="ba-tabs' . ( 1 === count( $days ) ? ' ba-tabs--one' : '' ) . '" role="tablist" aria-label="Event days">';
+			foreach ( $days as $date => $day_sessions ) {
 				$label = wp_date( $o['day_format'], ( new DateTime( $date . ' 12:00', $tz ) )->getTimestamp(), $tz );
 				$html .= sprintf(
-					'<button type="button" class="ba-tab" role="tab" id="%1$s-tab-%2$s" aria-controls="%1$s-day-%2$s" aria-selected="%3$s" tabindex="%4$s">%5$s</button>',
+					'<button type="button" class="ba-tab%6$s" role="tab" id="%1$s-tab-%2$s" aria-controls="%1$s-day-%2$s" aria-selected="%3$s" tabindex="%4$s">%5$s</button>',
 					esc_attr( $uid ),
 					esc_attr( $date ),
 					$date === $active ? 'true' : 'false',
 					$date === $active ? '0' : '-1',
-					esc_html( $label )
+					esc_html( $label ),
+					$day_sessions ? '' : ' is-no-sessions'
 				);
 			}
 			$html .= '</div>';
@@ -536,7 +555,9 @@ class Agenda_Renderer {
 		$html .= '<p class="ba-filter-status" aria-live="polite"></p>';
 
 		foreach ( $days as $date => $day_sessions ) {
-			$html .= self::render_day( $date, $day_sessions, $tracks, $tz, $o, $uid, $date === $active, count( $days ) > 1 );
+			$html .= $day_sessions
+				? self::render_day( $date, $day_sessions, $tracks, $tz, $o, $uid, $date === $active, $tabbed )
+				: self::render_empty_day( $date, $tz, $o, $uid, $date === $active, $tabbed );
 		}
 
 		if ( 'modal' === $o['details'] ) {
@@ -574,6 +595,22 @@ class Agenda_Renderer {
 			}
 		);
 		return $tracks;
+	}
+
+	/**
+	 * A day of the event with nothing scheduled yet.
+	 */
+	private static function render_empty_day( $date, DateTimeZone $tz, array $o, $uid, $active, $tabbed ) {
+		$text = '' !== trim( (string) $o['empty_day_text'] ) ? $o['empty_day_text'] : 'No sessions scheduled for this day yet.';
+		return sprintf(
+			'<div class="ba-day ba-day--none%5$s" id="%1$s-day-%2$s" data-date="%2$s"%3$s%4$s><p class="ba-none">%6$s</p></div>',
+			esc_attr( $uid ),
+			esc_attr( $date ),
+			$tabbed ? ' role="tabpanel" aria-labelledby="' . esc_attr( $uid . '-tab-' . $date ) . '"' : '',
+			$active ? '' : ' hidden',
+			$active ? ' is-active' : '',
+			esc_html( $text )
+		);
 	}
 
 	/**

@@ -5,7 +5,7 @@ A track by time agenda grid built into W3 Brella Integration. It reads the sched
 - X axis: tracks (Brella track order, or your own order)
 - Y axis: start time, in the event's own timezone
 - Overlapping sessions in the same track sit side by side
-- Day tabs for multi-day events (opens on today when the event is live)
+- Day tabs for every day of the event, taken from the event's start and end date in Brella (opens on today when the event is live)
 - Speaker avatars on each card, using the photo from the speaker's Brella profile (initials when there is no photo)
 - Filters on the same row as the day tabs: theatre (track), speaker, tags and session type
 - Details popup per session (description, speakers, tags)
@@ -67,7 +67,21 @@ Each column (theatre) comes from, in order of preference:
 
 Force one with the element's **Columns** setting (Auto, Brella track, Location, First tag), or `group_by` on the shortcode.
 
-## Shortcode
+## Days and timezone
+
+The day tabs list every day from the event's start date to its end date in Brella, plus any day a session falls on. A day with nothing scheduled yet still gets a tab and shows "No sessions scheduled for this day yet." A one-day event still shows its date tab.
+
+Times and day boundaries use the event's timezone. Brella sometimes sends a short name such as "Brisbane" instead of "Australia/Brisbane"; the plugin translates these. The **Timezone override** setting wins over Brella when it is filled in.
+
+To see exactly what Brella sent, click **Refresh now** on the settings page and check the **Brella event**, **Event dates from Brella**, **Timezone used** and **Days with sessions** rows under Schedule cache.
+
+In the element's **Grid** panel:
+
+- **Only show days that have sessions**: drop the tabs for empty days
+- **Hide the day tab when there is only one day**
+- **Text for a day with no sessions**
+
+
 
 Everything the element does is also available as a shortcode, handy for a Bricks Shortcode element or a non-Bricks page:
 
@@ -86,6 +100,9 @@ Everything the element does is also available as a shortcode, handy for a Bricks
 | theme | dark | dark or light |
 | include_networking | false | Show Brella 1:1 meeting slots |
 | hide_empty_tracks | true | Per day |
+| session_days_only | false | Only give a tab to days that have sessions |
+| hide_single_tab | false | No day tab when there is only one day |
+| empty_day_text | | Message on a day with no sessions |
 | show_subtitle / show_location / show_speakers | true | |
 | show_avatars | true | Speaker photos from Brella, initials when none (Bricks: *Hide speaker avatars*) |
 | max_avatars | 3 | Extra speakers show as "+N" |

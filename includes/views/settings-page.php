@@ -13,6 +13,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $session_count = is_array( $cache ) && ! empty( $cache['sessions'] ) ? count( $cache['sessions'] ) : 0;
 $sample        = is_array( $cache ) && ! empty( $cache['sessions'][0] ) ? $cache['sessions'][0] : null;
+$meta          = is_array( $cache ) && is_array( $cache['meta'] ?? null ) ? $cache['meta'] : array();
+$event         = is_array( $meta['event'] ?? null ) ? $meta['event'] : null;
+$session_days  = array();
+if ( is_array( $cache ) && ! empty( $cache['sessions'] ) ) {
+	foreach ( $cache['sessions'] as $row ) {
+		if ( ! empty( $row['day_key'] ) ) {
+			$session_days[ $row['day_key'] ] = ( $session_days[ $row['day_key'] ] ?? 0 ) + 1;
+		}
+	}
+	ksort( $session_days );
+}
+$tz_sources = array(
+	'setting' => __( 'Timezone override setting', 'cryptocon-brella' ),
+	'brella'  => __( 'Brella event', 'cryptocon-brella' ),
+);
 ?>
 <div class="wrap cryptocon-brella-settings">
 	<h1><?php esc_html_e( 'W3 Brella Integration', 'cryptocon-brella' ); ?></h1>
@@ -111,6 +126,64 @@ $sample        = is_array( $cache ) && ! empty( $cache['sessions'][0] ) ? $cache
 				<th><?php esc_html_e( 'Cache expires', 'cryptocon-brella' ); ?></th>
 				<td><?php echo esc_html( \CC\Brella\Cache::expires_human() ?: '—' ); ?></td>
 			</tr>
+			<?php if ( $cache ) : ?>
+				<tr>
+					<th><?php esc_html_e( 'Brella event', 'cryptocon-brella' ); ?></th>
+					<td>
+						<?php
+						if ( null === $event ) {
+							esc_html_e( 'Not stored yet. Click Refresh now.', 'cryptocon-brella' );
+						} elseif ( ! empty( $event['error'] ) ) {
+							echo esc_html( sprintf( __( 'Could not read the event from Brella: %s', 'cryptocon-brella' ), $event['error'] ) );
+						} else {
+							echo esc_html( '' !== $event['name'] ? $event['name'] : __( '(no name sent)', 'cryptocon-brella' ) );
+						}
+						?>
+					</td>
+				</tr>
+				<?php if ( $event && empty( $event['error'] ) ) : ?>
+					<tr>
+						<th><?php esc_html_e( 'Event dates from Brella', 'cryptocon-brella' ); ?></th>
+						<td>
+							<?php
+							if ( '' === $event['start_date'] ) {
+								esc_html_e( 'Brella sent no start or end date, so day tabs come from session times only.', 'cryptocon-brella' );
+							} else {
+								echo esc_html( $event['start_date'] . ( '' !== $event['end_date'] ? ' to ' . $event['end_date'] : '' ) );
+							}
+							?>
+						</td>
+					</tr>
+				<?php endif; ?>
+				<tr>
+					<th><?php esc_html_e( 'Timezone used', 'cryptocon-brella' ); ?></th>
+					<td>
+						<?php
+						$source = (string) ( $meta['timezone_source'] ?? '' );
+						echo esc_html( (string) ( $meta['timezone'] ?? '' ) );
+						if ( '' !== $source ) {
+							echo ' <span class="description">(' . esc_html( $tz_sources[ $source ] ?? sprintf( __( 'WordPress %s', 'cryptocon-brella' ), $source ) ) . ')</span>';
+						}
+						if ( $event && '' !== ( $event['time_zone_raw'] ?? '' ) ) {
+							echo '<br /><span class="description">' . esc_html( sprintf( __( 'Brella sent: "%s"', 'cryptocon-brella' ), $event['time_zone_raw'] ) ) . '</span>';
+						}
+						?>
+					</td>
+				</tr>
+				<tr>
+					<th><?php esc_html_e( 'Days with sessions', 'cryptocon-brella' ); ?></th>
+					<td>
+						<?php
+						if ( ! $session_days ) {
+							echo '&ndash;';
+						}
+						foreach ( $session_days as $day => $n ) {
+							echo esc_html( sprintf( _n( '%1$s: %2$d session', '%1$s: %2$d sessions', $n, 'cryptocon-brella' ), $day, $n ) ) . '<br />';
+						}
+						?>
+					</td>
+				</tr>
+			<?php endif; ?>
 		</tbody>
 	</table>
 
