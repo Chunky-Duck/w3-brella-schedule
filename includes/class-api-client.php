@@ -160,10 +160,15 @@ class Api_Client {
 	}
 
 	/**
+	 * Event details used by the agenda: name, first and last day, time zone.
+	 * Brella's attribute names vary in spelling between endpoints and API
+	 * versions (time-zone, time_zone, timezone, event-time-zone), so every
+	 * known form is checked.
+	 *
 	 * @param array{api_key:string,organization_id:string,event_id:string} $creds Credentials.
-	 * @return string|\WP_Error Timezone string or empty.
+	 * @return array{name:string,start_date:string,end_date:string,time_zone_raw:string,time_zone:string}|\WP_Error
 	 */
-	public static function fetch_event_timezone( array $creds ) {
+	public static function fetch_event( array $creds ) {
 		$response = self::request(
 			$creds,
 			sprintf(
@@ -177,15 +182,36 @@ class Api_Client {
 			return $response;
 		}
 
-		$data = $response['data'] ?? null;
-		if ( is_array( $data ) && isset( $data['attributes'] ) && is_array( $data['attributes'] ) ) {
-			$tz = $data['attributes']['timezone'] ?? $data['attributes']['time-zone'] ?? '';
-			if ( is_string( $tz ) && '' !== $tz ) {
-				return $tz;
-			}
-		}
+		$attrs = $response['data']['attributes'] ?? array();
+		$attrs = is_array( $attrs ) ? $attrs : array();
 
-		return '';
+		$pick = function ( array $keys ) use ( $attrs ) {
+			foreach ( $keys as $k ) {
+				if ( isset( $attrs[ $k ] ) && is_scalar( $attrs[ $k ] ) && '' !== trim( (string) $attrs[ $k ] ) ) {
+					return trim( (string) $attrs[ $k ] );
+				}
+			}
+			return '';
+		};
+
+		$tz_raw = $pick( array( 'time-zone', 'time_zone', 'timezone', 'event-time-zone', 'event_time_zone', 'timeZone' ) );
+
+		return array(
+			'name'          => $pick( array( 'name' ) ),
+			'start_date'    => $pick( array( 'start-date', 'start_date', 'startDate', 'starts-at', 'start-time', 'start-time-utc' ) ),
+			'end_date'      => $pick( array( 'end-date', 'end_date', 'endDate', 'ends-at', 'end-time', 'end-time-utc' ) ),
+			'time_zone_raw' => $tz_raw,
+			'time_zone'     => Normalizer::resolve_timezone( $tz_raw ),
+		);
+	}
+
+	/**
+	 * @param array{api_key:string,organization_id:string,event_id:string} $creds Credentials.
+	 * @return string|\WP_Error Timezone string or empty.
+	 */
+	public static function fetch_event_timezone( array $creds ) {
+		$event = self::fetch_event( $creds );
+		return is_wp_error( $event ) ? $event : $event['time_zone'];
 	}
 
 	/**

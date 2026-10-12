@@ -227,6 +227,29 @@ class Agenda_Element extends \Bricks\Element {
 			'inline'      => true,
 		];
 
+		$this->controls['session_days_only'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Only show days that have sessions', 'cryptocon-brella' ),
+			'type'        => 'checkbox',
+			'description' => esc_html__( 'By default every day between the event start and end date in Brella gets a tab, even before sessions are added to it.', 'cryptocon-brella' ),
+		];
+
+		$this->controls['hide_single_tab'] = [
+			'tab'   => 'content',
+			'group' => 'grid',
+			'label' => esc_html__( 'Hide the day tab when there is only one day', 'cryptocon-brella' ),
+			'type'  => 'checkbox',
+		];
+
+		$this->controls['empty_day_text'] = [
+			'tab'         => 'content',
+			'group'       => 'grid',
+			'label'       => esc_html__( 'Text for a day with no sessions', 'cryptocon-brella' ),
+			'type'        => 'text',
+			'placeholder' => 'No sessions scheduled for this day yet.',
+		];
+
 		$this->controls['show_timezone'] = [
 			'tab'     => 'content',
 			'group'   => 'grid',
@@ -903,15 +926,26 @@ class Agenda_Element extends \Bricks\Element {
 			);
 		}
 
-		$count = count( Cache::get_sessions() );
-		$sync  = Cache::last_sync_human();
+		$count   = count( Cache::get_sessions() );
+		$sync    = Cache::last_sync_human();
+		$payload = Cache::get_payload();
+		$meta    = is_array( $payload ) && is_array( $payload['meta'] ?? null ) ? $payload['meta'] : array();
+		$event   = is_array( $meta['event'] ?? null ) ? $meta['event'] : array();
+		$extra   = '';
+		if ( ! empty( $meta['timezone'] ) ) {
+			$extra .= ' ' . sprintf( __( 'Timezone %s.', 'cryptocon-brella' ), esc_html( $meta['timezone'] ) );
+		}
+		if ( ! empty( $event['start_date'] ) ) {
+			$extra .= ' ' . sprintf( __( 'Event dates %s.', 'cryptocon-brella' ), esc_html( $event['start_date'] . ( ! empty( $event['end_date'] ) ? ' to ' . $event['end_date'] : '' ) ) );
+		}
 
 		return sprintf(
-			/* translators: 1: session count, 2: last sync time, 3: settings URL */
-			__( 'Connected to Brella: %1$d sessions cached, last sync %2$s. <a href="%3$s" target="_blank" rel="noopener">Manage key and cache in W3 Brella Integration</a>.', 'cryptocon-brella' ),
+			/* translators: 1: session count, 2: last sync time, 3: settings URL, 4: timezone and dates */
+			__( 'Connected to Brella: %1$d sessions cached, last sync %2$s.%4$s <a href="%3$s" target="_blank" rel="noopener">Manage key and cache in W3 Brella Integration</a>.', 'cryptocon-brella' ),
 			$count,
 			esc_html( $sync ? $sync : 'never' ),
-			$url
+			$url,
+			$extra
 		);
 	}
 
@@ -1052,6 +1086,9 @@ class Agenda_Element extends \Bricks\Element {
 				'hide_live'          => $bool( 'hide_live' ),
 				'hide_live_ring'     => $bool( 'hide_live_ring' ),
 				'hide_cover'         => $bool( 'hide_cover' ),
+				'session_days_only'  => $bool( 'session_days_only' ),
+				'hide_single_tab'    => $bool( 'hide_single_tab' ),
+				'empty_day_text'     => $s['empty_day_text'] ?? '',
 				'compact_bar'        => isset( $s['compact_bar'] ) && '' !== $s['compact_bar'] ? $s['compact_bar'] : 1100,
 				'extra_colours'      => self::colours_from( $s['extra_colours'] ?? [] ),
 				'sponsor_position'   => $s['sponsor_position'] ?? 'above',

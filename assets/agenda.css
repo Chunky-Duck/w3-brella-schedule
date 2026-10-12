@@ -188,6 +188,14 @@
 	opacity: 0.45;
 }
 
+.brella-agenda .ba-none {
+	margin: 0;
+}
+
+.ba-tab.is-no-sessions:not([aria-selected="true"]) {
+	opacity: 0.7;
+}
+
 .ba-filters {
 	display: flex;
 	flex-wrap: nowrap;
@@ -291,7 +299,8 @@
 	display: none;
 }
 
-.brella-agenda .ba-empty {
+.brella-agenda .ba-empty,
+.brella-agenda .ba-none {
 	padding: 2rem 1rem;
 	text-align: center;
 	border: 1px dashed var(--ba-line-strong);

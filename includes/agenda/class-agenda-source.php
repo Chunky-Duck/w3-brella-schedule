@@ -43,19 +43,84 @@ class Agenda_Source {
 			return new WP_Error( 'brella_empty', 'No sessions cached yet. Click Refresh now on the W3 Brella Integration settings page.' );
 		}
 
-		$timezone = '';
-		if ( is_array( $payload ) && ! empty( $payload['meta']['timezone'] ) ) {
-			$timezone = (string) $payload['meta']['timezone'];
-		} else {
-			$timezone = (string) Settings::get( 'timezone', '' );
+		$meta     = is_array( $payload ) && is_array( $payload['meta'] ?? null ) ? $payload['meta'] : array();
+		$timezone = Normalizer::resolve_timezone( (string) Settings::get( 'timezone', '' ) );
+		if ( '' === $timezone ) {
+			$timezone = Normalizer::resolve_timezone( (string) ( $meta['timezone'] ?? '' ) );
+		}
+		if ( '' === $timezone && ! empty( $meta['event']['time_zone_raw'] ) ) {
+			$timezone = Normalizer::resolve_timezone( (string) $meta['event']['time_zone_raw'] );
+		}
+		if ( '' === $timezone ) {
+			$timezone = wp_timezone_string();
 		}
 
-		return self::convert_rows(
+		$schedule = self::convert_rows(
 			$rows,
 			$o['group_by'],
 			$timezone,
 			is_array( $payload ) ? (int) ( $payload['fetched_at'] ?? time() ) : time()
 		);
+
+		$event                 = is_array( $meta['event'] ?? null ) ? $meta['event'] : array();
+		$schedule['event']     = $event;
+		$schedule['event_dates'] = self::event_dates( $event, $timezone );
+
+		return $schedule;
+	}
+
+	/**
+	 * Every calendar day of the event, from Brella's start and end date, in the
+	 * event's time zone. Accepts plain dates ("2026-11-04") or full date-times.
+	 * Capped at 31 days so a bad end date can never flood the tab bar.
+	 *
+	 * @param array  $event    Event details stored by the sync.
+	 * @param string $timezone IANA time zone.
+	 * @return string[] Y-m-d dates.
+	 */
+	public static function event_dates( array $event, $timezone ) {
+		$start = self::to_local_date( (string) ( $event['start_date'] ?? '' ), $timezone );
+		$end   = self::to_local_date( (string) ( $event['end_date'] ?? '' ), $timezone );
+
+		if ( '' === $start ) {
+			return array();
+		}
+		if ( '' === $end || $end < $start ) {
+			$end = $start;
+		}
+
+		$dates = array();
+		$day   = new \DateTime( $start . ' 12:00:00', new \DateTimeZone( 'UTC' ) );
+		for ( $i = 0; $i < 31; $i++ ) {
+			$ymd = $day->format( 'Y-m-d' );
+			if ( $ymd > $end ) {
+				break;
+			}
+			$dates[] = $ymd;
+			$day->modify( '+1 day' );
+		}
+		return $dates;
+	}
+
+	private static function to_local_date( $value, $timezone ) {
+		$value = trim( $value );
+		if ( '' === $value ) {
+			return '';
+		}
+		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+			return $value;
+		}
+		try {
+			$tz = new \DateTimeZone( $timezone ?: 'UTC' );
+		} catch ( \Exception $e ) {
+			$tz = new \DateTimeZone( 'UTC' );
+		}
+		try {
+			$dt = new \DateTime( $value, new \DateTimeZone( 'UTC' ) );
+		} catch ( \Exception $e ) {
+			return '';
+		}
+		return $dt->setTimezone( $tz )->format( 'Y-m-d' );
 	}
 
 	/**
